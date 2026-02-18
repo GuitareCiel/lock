@@ -1,0 +1,27 @@
+{
+  "name": "lock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The decision protocol for product teams",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @lock/core dev\" \"pnpm --filter @lock/slack dev\"",
+    "dev:core": "pnpm --filter @lock/core dev",
+    "dev:slack": "pnpm --filter @lock/slack dev",
+    "dev:cli": "pnpm --filter @lock/cli dev",
+    "dev:mcp": "pnpm --filter @lock/mcp dev",
+    "build": "pnpm -r build",
+    "db:migrate": "pnpm --filter @lock/core db:migrate",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

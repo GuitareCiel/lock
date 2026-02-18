@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: lock-db
+    environment:
+      POSTGRES_USER: lock
+      POSTGRES_PASSWORD: lock
+      POSTGRES_DB: lock
+    ports:
+      - "5432:5432"
+    volumes:
+      - lock_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  lock_data:
