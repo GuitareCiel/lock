@@ -23,7 +23,53 @@ Lock has one core API and multiple input surfaces:
 
 Decisions are stored in PostgreSQL with vector embeddings. When a new decision is committed, Lock searches for conflicting or superseding decisions across the same product and flags them.
 
-## Prerequisites
+## Quick Start (Docker)
+
+The fastest way to run Lock. Requires Docker.
+
+### 1. Clone and configure
+
+```bash
+git clone <repo-url> lock
+cd lock
+cp .env.example .env
+```
+
+Edit `.env` with your API keys:
+
+```env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Slack (optional — skip if not using the Slack surface)
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_SIGNING_SECRET=...
+SLACK_APP_TOKEN=xapp-...
+```
+
+### 2. Start everything
+
+```bash
+docker compose up -d
+```
+
+This starts PostgreSQL (with pgvector), applies the database schema, and runs the Core API + Slack bot. The API is available at `http://localhost:3000`.
+
+### 3. Create an API key
+
+Open `http://localhost:3000` in your browser to access the admin UI. Create a workspace and generate an API key.
+
+### 4. Verify
+
+```bash
+curl http://localhost:3000/health
+```
+
+## Development Setup
+
+For contributors working on Lock itself.
+
+### Prerequisites
 
 - **Node.js** 20+
 - **pnpm** 9+
@@ -33,8 +79,6 @@ Decisions are stored in PostgreSQL with vector embeddings. When a new decision i
 
 Optional:
 - **Slack workspace** with permissions to create apps (for the Slack bot surface)
-
-## Setup
 
 ### 1. Clone and install
 
@@ -120,26 +164,34 @@ After creating the app, install it to your workspace and copy the tokens into `.
 
 ## CLI setup
 
-Build the CLI and link it globally:
+Install the CLI globally:
+
+```bash
+npm install -g @uselock/cli
+```
+
+Or build from source:
 
 ```bash
 pnpm --filter @uselock/cli build
 cd packages/cli && pnpm link --global
 ```
 
-Configure credentials (where the core API is running and your API key):
+### Authenticate
 
 ```bash
-mkdir -p ~/.lock
-cat > ~/.lock/credentials << 'EOF'
-{
-  "api_url": "http://localhost:3000",
-  "api_key": "your-api-key"
-}
-EOF
+lock login
 ```
 
-Initialize a project directory:
+This prompts for your Lock API URL and API key, validates them against the server, and saves credentials to `~/.lock/credentials`.
+
+For non-interactive use (CI/scripts):
+
+```bash
+lock login --url http://localhost:3000 --key lk_your_api_key
+```
+
+### Initialize a project directory
 
 ```bash
 cd ~/your-project
@@ -162,12 +214,16 @@ lock export          # generates LOCK.md with all active decisions
 | `lock log` | List recent decisions |
 | `lock show <id>` | Show a single decision |
 | `lock search "<query>"` | Semantic search |
+| `lock check "<intent>"` | Check for constraints before building |
 | `lock revert <id>` | Revert a decision |
 | `lock link <id> <ref>` | Add an external link |
 | `lock export` | Export active decisions to `LOCK.md` |
 | `lock products` | List products |
 | `lock features` | List features |
 | `lock init` | Initialize project directory |
+| `lock login` | Authenticate with a Lock server |
+| `lock logout` | Remove stored credentials |
+| `lock whoami` | Show current credentials and connection status |
 
 ## MCP server setup (for AI agents)
 
@@ -179,11 +235,11 @@ The MCP server lets AI coding tools read and write decisions. Add it to your too
 {
   "mcpServers": {
     "lock": {
-      "command": "node",
-      "args": ["/path/to/lock/packages/mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["@uselock/mcp-server"],
       "env": {
         "LOCK_API_URL": "http://localhost:3000",
-        "LOCK_API_KEY": "your-api-key"
+        "LOCK_API_KEY": "lk_your_api_key"
       }
     }
   }
@@ -196,11 +252,11 @@ The MCP server lets AI coding tools read and write decisions. Add it to your too
 {
   "mcpServers": {
     "lock": {
-      "command": "node",
-      "args": ["/path/to/lock/packages/mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["@uselock/mcp-server"],
       "env": {
         "LOCK_API_URL": "http://localhost:3000",
-        "LOCK_API_KEY": "your-api-key"
+        "LOCK_API_KEY": "lk_your_api_key"
       }
     }
   }
@@ -256,13 +312,18 @@ lock/
 │   ├── slack/         # Slack bot (@slack/bolt)
 │   ├── cli/           # Terminal client (commander.js)
 │   └── mcp/           # MCP server for AI agents
-├── docker-compose.yml # PostgreSQL + pgvector
+├── Dockerfile         # Multi-stage build for production
+├── docker-compose.yml # PostgreSQL + pgvector + Lock app
 ├── .env.example       # Environment template
 └── CLAUDE.md          # Full architecture spec
 ```
 
-## Stopping the database
+## Stopping services
 
 ```bash
+# Docker deployment
+docker compose down
+
+# Development database only
 pnpm db:down
 ```

@@ -1,0 +1,79 @@
+# Lock Slack App Manifest
+#
+# Use this file to create the Lock Slack app:
+#   1. Go to https://api.slack.com/apps
+#   2. Click "Create New App" → "From an app manifest"
+#   3. Select your workspace
+#   4. Paste this YAML and click "Create"
+#   5. Go to "Install App" → "Install to Workspace"
+#   6. Copy the tokens into your .env file:
+#      - Bot User OAuth Token (xoxb-...) → SLACK_BOT_TOKEN
+#      - Signing Secret (Settings → Basic Information) → SLACK_SIGNING_SECRET
+#      - App-Level Token (Settings → Basic Information → Generate) → SLACK_APP_TOKEN
+#        (when generating, add the "connections:write" scope)
+#
+# After installing, invite @Lock to channels where your team
+# makes product decisions, then run: @lock init --product <slug> --feature <slug>
+
+_metadata:
+  major_version: 1
+
+display_information:
+  name: Lock
+  description: Decision tracking for product teams
+  long_description: |
+    Lock captures product decisions where they happen — in Slack threads,
+    in the terminal, or in AI agent sessions. Think "git commit" but for
+    product decisions instead of code.
+
+    Use @lock in any channel to record a decision. Lock stores it with
+    full context (who, when, what was discussed), checks for conflicts
+    with existing decisions, and keeps the whole team in sync.
+  background_color: "#1a1a2e"
+
+features:
+  bot_user:
+    display_name: Lock
+    always_online: true
+
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: false
+    messages_tab_read_only_enabled: false
+
+oauth_config:
+  scopes:
+    bot:
+      # Receive @lock mentions in channels
+      - app_mentions:read
+
+      # Post responses, confirmations, and conflict alerts
+      - chat:write
+
+      # Read thread messages for context extraction (@lock this)
+      - channels:history
+
+      # Read threads in private channels
+      - groups:history
+
+      # Resolve user IDs to display names for decision authorship
+      - users:read
+
+      # Get channel info for permalink generation
+      - channels:read
+
+      # Read private channel info for permalink generation
+      - groups:read
+
+settings:
+  event_subscriptions:
+    bot_events:
+      # Triggers when someone mentions @lock in a channel
+      - app_mention
+
+  interactivity:
+    is_enabled: true
+
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

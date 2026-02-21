@@ -27,66 +27,144 @@ Lock is designed to run on your own infrastructure. This guide covers everything
 
 The core API is the only stateful component. The Slack bot, CLI, and MCP server are all thin clients that call the API.
 
-## Prerequisites
+## Quick Start (Docker Compose)
+
+The recommended way to deploy Lock. One command gets you a working instance.
+
+### Prerequisites
+
+- **Docker** and **Docker Compose**
+- **OpenAI API key** (for semantic embeddings)
+- **Anthropic API key** (for conflict classification)
+- **Slack app tokens** (optional, for Slack integration)
+
+### 1. Clone and configure
+
+```bash
+git clone <repo-url> lock
+cd lock
+cp .env.example .env
+```
+
+Edit `.env` with your keys:
+
+```env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Slack (optional)
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_SIGNING_SECRET=...
+SLACK_APP_TOKEN=xapp-...
+```
+
+### 2. Start everything
+
+```bash
+docker compose up -d
+```
+
+This:
+1. Starts PostgreSQL 16 with pgvector
+2. Waits for the database to be healthy
+3. Applies the database schema automatically
+4. Starts the Core API and Slack bot
+
+### 3. Verify
+
+```bash
+# Check the API is running
+curl http://localhost:3000/health
+
+# Check container logs
+docker compose logs lock
+```
+
+You should see:
+```
+Lock: PostgreSQL is ready.
+Lock: schema push complete.
+Lock: starting services...
+Lock Core API running on port 3000
+```
+
+### 4. Create an API key
+
+Open `http://localhost:3000` in your browser to access the admin UI. Create a workspace and generate an API key.
+
+### 5. Connect clients
+
+**CLI:**
+```bash
+npm install -g @uselock/cli
+lock login --url http://your-server:3000 --key lk_your_api_key
+```
+
+**MCP (Claude Code / Cursor):**
+```json
+{
+  "mcpServers": {
+    "lock": {
+      "command": "npx",
+      "args": ["@uselock/mcp-server"],
+      "env": {
+        "LOCK_API_URL": "http://your-server:3000",
+        "LOCK_API_KEY": "lk_your_api_key"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Manual Setup (without Docker)
+
+For environments where Docker isn't available, or for development.
+
+### Prerequisites
 
 - **Node.js 20+**
 - **pnpm 9+**
 - **PostgreSQL 16** with the **pgvector** extension
 - **OpenAI API key** (for semantic embeddings)
 - **Anthropic API key** (for conflict classification)
-- **Slack app** (optional, for Slack integration)
 
-## Quick Start (Docker)
-
-### 1. Clone and Install
+### 1. Install dependencies
 
 ```bash
-git clone https://github.com/your-org/lock.git
+git clone <repo-url> lock
 cd lock
 pnpm install
 ```
 
-### 2. Start the Database
+### 2. Set up the database
+
+If running your own PostgreSQL instance, enable the required extensions:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+```
+
+Or use the included Docker Compose to start just the database:
 
 ```bash
 pnpm db:up
 ```
 
-This starts PostgreSQL 16 with pgvector via Docker Compose:
-
-```yaml
-# docker-compose.yml
-services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_USER: lock
-      POSTGRES_PASSWORD: lock
-      POSTGRES_DB: lock
-    ports:
-      - "5432:5432"
-    volumes:
-      - lock_data:/var/lib/postgresql/data
-```
-
-The `pgvector` and `pgcrypto` extensions are automatically enabled on first start.
-
-### 3. Configure Environment
+### 3. Configure environment
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your values:
+Edit `.env`:
 
 ```env
-# Database
 DATABASE_URL=postgresql://lock:lock@localhost:5432/lock
 
-# OpenAI (for embedding generation)
 OPENAI_API_KEY=sk-...
-
-# Anthropic (for conflict classification)
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Slack (optional)
@@ -94,22 +172,19 @@ SLACK_BOT_TOKEN=xoxb-...
 SLACK_SIGNING_SECRET=...
 SLACK_APP_TOKEN=xapp-...
 
-# App
 API_PORT=3000
 SLACK_PORT=3001
 NODE_ENV=development
-
-# Internal service-to-service auth
 INTERNAL_SECRET=change-me-to-a-random-string
 ```
 
-### 4. Run Migrations
+### 4. Run migrations
 
 ```bash
 pnpm db:migrate
 ```
 
-### 5. Build and Start
+### 5. Build and start
 
 ```bash
 pnpm build
@@ -120,7 +195,7 @@ pnpm dev:core     # Just the core API
 
 The API will be available at `http://localhost:3000`.
 
-### 6. Create an API Key
+### 6. Create an API key
 
 Open `http://localhost:3000` in your browser to access the admin UI. Create a workspace and generate an API key.
 
@@ -164,9 +239,11 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 ```
 
-### Migrations
+### Schema Management
 
-Migrations are managed by Drizzle ORM and live in `packages/core/drizzle/migrations/`.
+The Docker deployment uses `drizzle-kit push` to apply the schema directly from `schema.ts` on each container start. This is idempotent — safe to run repeatedly.
+
+For manual deployments, use migrations:
 
 ```bash
 pnpm db:migrate
@@ -174,7 +251,7 @@ pnpm db:migrate
 
 ### Schema
 
-The database has 6 tables:
+The database has 7 tables:
 
 | Table | Purpose |
 |-------|---------|
@@ -212,27 +289,39 @@ Subscribe to the `app_mention` event.
 
 ### Running the Slack Bot
 
+With Docker Compose, the Slack bot starts automatically alongside the core API. Socket mode is used by default (no inbound port required).
+
+For manual setups:
+
 ```bash
 pnpm dev:slack
 ```
-
-The bot uses socket mode in development. For production, configure HTTP webhooks to point to your Slack bot's URL.
 
 ---
 
 ## Production Deployment
 
-### Building for Production
+### Docker Compose (recommended)
+
+The included `docker-compose.yml` is production-ready:
+
+- PostgreSQL has a healthcheck; Lock waits for it before starting
+- Schema is applied automatically on each start
+- Both services restart automatically (`restart: unless-stopped`)
+- Only port 3000 is exposed (Slack bot uses socket mode internally)
+
+To customize the exposed port:
 
 ```bash
-pnpm build
+API_PORT=8080 docker compose up -d
 ```
 
-This compiles all TypeScript packages to JavaScript in their respective `dist/` directories.
-
-### Running in Production
+### Running without Docker
 
 ```bash
+# Build
+pnpm build
+
 # Core API
 NODE_ENV=production node packages/core/dist/index.js
 
@@ -291,8 +380,10 @@ lock/
 │   ├── cli/         # CLI (thin client)
 │   └── mcp/         # MCP server for AI agents (thin client)
 ├── scripts/
-│   ├── init-db.sql  # Database initialization
-│   └── seed.ts      # Sample data seeding
+│   ├── docker-entrypoint.sh  # Container entrypoint
+│   ├── init-db.sql           # Database initialization
+│   └── seed.ts               # Sample data seeding
+├── Dockerfile
 └── docker-compose.yml
 ```
 

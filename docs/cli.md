@@ -12,16 +12,76 @@ Requires Node.js 20 or later.
 
 ## Authentication
 
-On first use, Lock prompts you for your API URL and key:
+### `lock login` — Authenticate
+
+The recommended way to authenticate. Prompts for your API URL and API key, validates them against the server, and saves credentials.
+
+```bash
+lock login
+```
 
 ```
-$ lock log
+$ lock login
 Lock API URL: (http://localhost:3000) https://your-lock-instance.com
 API key: ************************************
+
+Validating credentials...
+
+Logged in successfully.
+  API URL: https://your-lock-instance.com
+  Key:     lk_a7f3e2...
+  Products: trading, risk-engine
+
 Credentials saved to ~/.lock/credentials
 ```
 
-Credentials are stored in `~/.lock/credentials` with restrictive file permissions (0600). The file contains:
+For non-interactive use (CI/scripts):
+
+```bash
+lock login --url https://your-lock-instance.com --key lk_your_api_key
+```
+
+If you're already logged in, `lock login` shows your current credentials and asks to confirm before overwriting.
+
+### `lock whoami` — Check Connection
+
+Displays your current credentials and tests the connection to the Lock server.
+
+```bash
+lock whoami
+```
+
+```
+$ lock whoami
+  API URL: https://your-lock-instance.com
+  Key:     lk_a7f3e2...
+  Status:  connected
+```
+
+If not logged in:
+
+```
+$ lock whoami
+Not logged in.
+Run `lock login` to authenticate.
+```
+
+### `lock logout` — Remove Credentials
+
+Removes stored credentials from `~/.lock/credentials`.
+
+```bash
+lock logout          # prompts for confirmation
+lock logout --force  # skip confirmation
+```
+
+### Auto-prompt fallback
+
+If you run any command without having logged in first (e.g., `lock log`), the CLI will prompt you for credentials interactively. `lock login` is the discoverable path; the auto-prompt is the safety net.
+
+### Credential storage
+
+Credentials are stored in `~/.lock/credentials` with restrictive file permissions (0600):
 
 ```json
 {
@@ -29,6 +89,8 @@ Credentials are stored in `~/.lock/credentials` with restrictive file permission
   "api_key": "lk_a7f3e2..."
 }
 ```
+
+---
 
 ## Project Setup
 
@@ -301,7 +363,7 @@ The exported file groups decisions by feature and sorts by scope (architectural 
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `~/.lock/credentials` | Home directory | API URL and key (created on first use) |
+| `~/.lock/credentials` | Home directory | API URL and key (created by `lock login` or auto-prompt) |
 | `.lock/config.json` | Project directory | Product and feature scope (created by `lock init`) |
 
 Both are JSON files. The credentials file has restricted permissions for security.

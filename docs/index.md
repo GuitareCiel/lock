@@ -57,6 +57,9 @@ Learn more in [Core Concepts](/docs/concepts).
 npm install -g @uselock/cli
 
 # Authenticate
+lock login
+
+# Scope a project directory
 lock init --product my-product --feature my-feature
 
 # Record a decision
