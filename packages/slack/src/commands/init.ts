@@ -15,26 +15,29 @@ export async function handleInit(
 ): Promise<any[]> {
   const { product, feature } = command.flags;
 
-  if (!product || !feature) {
+  if (!product) {
     return formatError(
       'MISSING_FLAGS',
-      'Both `--product` and `--feature` are required.\nUsage: `@lock init --product <product-slug> --feature <feature-slug>`',
+      '`--product` is required.\nUsage: `@lock init --product <product-slug>` or `@lock init --product <product-slug> --feature <feature-slug>`',
     );
   }
 
   try {
-    const response = await callApi('POST', '/api/v1/channel-configs', {
+    const body: Record<string, string> = {
       slack_channel_id: channelId,
       product,
-      feature,
-    });
+    };
+    if (feature) body.feature = feature;
+
+    const response = await callApi('POST', '/api/v1/channel-configs', body);
 
     if (response.error) {
       return formatError(response.error.code || 'INIT_FAILED', response.error.message);
     }
 
+    const featureLabel = feature || 'main';
     return formatSuccess(
-      `Channel linked to *${product}* / *${feature}*.\nAll locks in this channel will be scoped to this product and feature.`,
+      `Channel linked to *${product}* / *${featureLabel}*.\nAll locks in this channel will be scoped to this product and feature.`,
     );
   } catch (err: any) {
     return formatError('INIT_FAILED', err.message || 'Failed to initialize channel configuration.');
