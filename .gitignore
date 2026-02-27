@@ -6,3 +6,8 @@ dist/
 .DS_Store
 .lock/
 .mcp.json
+
+# Internal docs
+docs/gtm.md
+docs/website-brief.md
+docs/docs-update-instructions.md
