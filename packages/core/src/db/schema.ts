@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  integer,
-  index,
-  unique,
-  customType,
-} from 'drizzle-orm/pg-core';
+import { customType, index, integer, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 // Custom pgvector type
 const vector = customType<{ data: number[]; driverParam: string }>({
@@ -19,10 +10,7 @@ const vector = customType<{ data: number[]; driverParam: string }>({
   },
   fromDriver(value: unknown): number[] {
     const str = value as string;
-    return str
-      .slice(1, -1)
-      .split(',')
-      .map(Number);
+    return str.slice(1, -1).split(',').map(Number);
   },
 });
 
@@ -50,9 +38,7 @@ export const products = pgTable(
     description: text('description'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
-  (table) => [
-    unique('products_workspace_slug').on(table.workspaceId, table.slug),
-  ]
+  (table) => [unique('products_workspace_slug').on(table.workspaceId, table.slug)],
 );
 
 // Features
@@ -69,9 +55,7 @@ export const features = pgTable(
     slackChannelId: text('slack_channel_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
-  (table) => [
-    unique('features_product_slug').on(table.productId, table.slug),
-  ]
+  (table) => [unique('features_product_slug').on(table.productId, table.slug)],
 );
 
 // Locks (decisions)
@@ -127,7 +111,7 @@ export const locks = pgTable(
     index('idx_locks_status').on(table.status),
     index('idx_locks_short_id').on(table.shortId),
     index('idx_locks_decision_type').on(table.decisionType),
-  ]
+  ],
 );
 
 // External links
@@ -195,5 +179,5 @@ export const knowledge = pgTable(
     index('idx_knowledge_product').on(table.productId),
     index('idx_knowledge_feature').on(table.featureId),
     unique('knowledge_product_feature_facet').on(table.productId, table.featureId, table.facet),
-  ]
+  ],
 );

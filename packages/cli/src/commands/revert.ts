@@ -1,6 +1,6 @@
-import { Command } from 'commander';
 import os from 'node:os';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { apiPost } from '../lib/api-client.js';
 import { formatLock } from '../lib/formatters.js';
 

@@ -1,5 +1,5 @@
+import { formatError, formatLockList } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatLockList, formatError } from '../lib/formatters.js';
 
 /**
  * Handle `@lock log` — list recent locks with optional filters.
@@ -9,10 +9,7 @@ import { formatLockList, formatError } from '../lib/formatters.js';
  * - --feature <slug>
  * - --scope <minor|major|architectural>
  */
-export async function handleLog(
-  command: ParsedCommand,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleLog(command: ParsedCommand, callApi: Function): Promise<any[]> {
   const params = new URLSearchParams();
 
   if (command.flags.product) {

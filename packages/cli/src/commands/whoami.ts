@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { credentialsExist, getCredentials } from '../lib/credentials.js';
 
 export const whoamiCommand = new Command('whoami')
@@ -20,11 +20,7 @@ export const whoamiCommand = new Command('whoami')
       }
     }
     console.log(`  ${chalk.dim('API URL:')} ${creds.api_url}`);
-    if (creds.api_key) {
-      console.log(`  ${chalk.dim('Key:')}     ${creds.api_key.slice(0, 8)}...`);
-    } else if (creds.access_token) {
-      console.log(`  ${chalk.dim('Auth:')}    browser login`);
-    }
+    console.log(`  ${chalk.dim('Auth:')}    browser login`);
     if (creds.workspace_id) {
       console.log(`  ${chalk.dim('Workspace:')} ${creds.workspace_id}`);
     }

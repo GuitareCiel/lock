@@ -26,9 +26,11 @@ export function registerChangeScope(app: any, callApi: Function) {
       }
 
       const scopeEmoji =
-        scope === 'architectural' ? ':rotating_light:' :
-        scope === 'major' ? ':large_orange_diamond:' :
-        ':small_blue_diamond:';
+        scope === 'architectural'
+          ? ':rotating_light:'
+          : scope === 'major'
+            ? ':large_orange_diamond:'
+            : ':small_blue_diamond:';
 
       await respond({
         blocks: [

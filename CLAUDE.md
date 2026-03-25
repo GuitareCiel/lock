@@ -10,6 +10,29 @@ Lock solves this with a simple `@lock` command that snapshots a decision with fu
 
 ---
 
+## Required Skills
+
+The following skills **must** be installed and used when working on this project:
+
+1. **Next.js Best Practices** — enforces App Router conventions, server components, and Next.js patterns for `packages/web/`
+2. **Frontend Design** — enforces clean, consistent UI implementation
+
+### Install (if not already present)
+
+```bash
+npx skills add https://github.com/vercel-labs/next-skills --skill next-best-practices -y
+npx skills add https://github.com/anthropics/skills --skill frontend-design -y
+```
+
+### Usage rules
+
+- **Always** check that `.claude/skills/next-best-practices` and `.claude/skills/frontend-design` exist before making frontend changes. If missing, install them first.
+- **Always** follow the guidance from these skills when writing or modifying code in `packages/web/`.
+- The `next-best-practices` skill applies to all Next.js work (routing, data fetching, components, configuration).
+- The `frontend-design` skill applies to all UI/UX work (component structure, styling, accessibility, responsiveness).
+
+---
+
 
 ## Architecture Overview
 

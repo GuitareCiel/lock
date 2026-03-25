@@ -1,26 +1,26 @@
 import type { FastifyInstance } from 'fastify';
+import { trackEvent } from '../lib/hooks.js';
+import { preCheckConflicts } from '../services/conflict-service.js';
+import { type ExtractRequest, extractBatchDecisions, extractFromThread } from '../services/extract-service.js';
+import { getLineage } from '../services/lineage-service.js';
 import {
-  commitLock,
-  listLocks,
-  getLock,
-  revertLock,
   addLink,
+  commitLock,
+  getLock,
+  getRecap,
+  listLocks,
+  revertLock,
   searchLocks,
   updateLockMetadata,
-  getRecap,
 } from '../services/lock-service.js';
-import { extractFromThread, extractBatchDecisions, type ExtractRequest } from '../services/extract-service.js';
-import { preCheckConflicts } from '../services/conflict-service.js';
-import { getLineage } from '../services/lineage-service.js';
 import type {
-  CreateLockRequest,
-  RevertLockRequest,
   AddLinkRequest,
-  SearchLocksRequest,
+  CreateLockRequest,
   ListLocksQuery,
+  RevertLockRequest,
+  SearchLocksRequest,
 } from '../types.js';
 import { VALID_DECISION_TYPES } from '../types.js';
-import { trackEvent } from '../lib/hooks.js';
 
 export async function lockRoutes(fastify: FastifyInstance) {
   // Commit a new lock
@@ -114,7 +114,11 @@ export async function lockRoutes(fastify: FastifyInstance) {
 
   // Batch extraction from message history
   fastify.post('/extract-batch', llmRateLimit, async (request, reply) => {
-    const body = request.body as { messages: { text: string; author: string; timestamp: string }[]; product?: string; feature?: string };
+    const body = request.body as {
+      messages: { text: string; author: string; timestamp: string }[];
+      product?: string;
+      feature?: string;
+    };
 
     if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
       return reply.status(400).send({
@@ -185,7 +189,10 @@ export async function lockRoutes(fastify: FastifyInstance) {
 
     if (body.decision_type && !VALID_DECISION_TYPES.includes(body.decision_type as any)) {
       return reply.status(400).send({
-        error: { code: 'VALIDATION_ERROR', message: `Invalid decision_type. Must be one of: ${VALID_DECISION_TYPES.join(', ')}` },
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Invalid decision_type. Must be one of: ${VALID_DECISION_TYPES.join(', ')}`,
+        },
       });
     }
 

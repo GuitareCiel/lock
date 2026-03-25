@@ -120,9 +120,7 @@ export function registerInitChannel(app: any, callApi: Function) {
       if (products.length > 100) {
         productBlocks.push({
           type: 'context',
-          elements: [
-            { type: 'mrkdwn', text: `Showing first 100 of ${products.length} products.` },
-          ],
+          elements: [{ type: 'mrkdwn', text: `Showing first 100 of ${products.length} products.` }],
         });
       }
       productBlocks.push({
@@ -190,24 +188,38 @@ export function registerInitChannel(app: any, callApi: Function) {
       }
 
       if (!/^[a-z0-9-]+$/.test(productSlug)) {
-        await ack({ response_action: 'errors', errors: { product_slug_block: 'Slug must be lowercase letters, numbers, and hyphens only.' } });
+        await ack({
+          response_action: 'errors',
+          errors: { product_slug_block: 'Slug must be lowercase letters, numbers, and hyphens only.' },
+        });
         return;
       }
 
       // Create product
       try {
-        const res = await callApi('POST', '/api/v1/products', {
-          slug: productSlug,
-          name: productName,
-          description: productDesc,
-        }, metadata.teamId || view.team_id || '');
+        const res = await callApi(
+          'POST',
+          '/api/v1/products',
+          {
+            slug: productSlug,
+            name: productName,
+            description: productDesc,
+          },
+          metadata.teamId || view.team_id || '',
+        );
 
         if (res.error && res.error.code !== 'PRODUCT_EXISTS') {
-          await ack({ response_action: 'errors', errors: { product_slug_block: res.error.message || 'Failed to create product.' } });
+          await ack({
+            response_action: 'errors',
+            errors: { product_slug_block: res.error.message || 'Failed to create product.' },
+          });
           return;
         }
       } catch (err: any) {
-        await ack({ response_action: 'errors', errors: { product_slug_block: err.message || 'Failed to create product.' } });
+        await ack({
+          response_action: 'errors',
+          errors: { product_slug_block: err.message || 'Failed to create product.' },
+        });
         return;
       }
     }
@@ -226,7 +238,10 @@ export function registerInitChannel(app: any, callApi: Function) {
     }
 
     if (!/^[a-z0-9-]+$/.test(featureSlug)) {
-      await ack({ response_action: 'errors', errors: { feature_slug_block: 'Slug must be lowercase letters, numbers, and hyphens only.' } });
+      await ack({
+        response_action: 'errors',
+        errors: { feature_slug_block: 'Slug must be lowercase letters, numbers, and hyphens only.' },
+      });
       return;
     }
 
@@ -243,28 +258,45 @@ export function registerInitChannel(app: any, callApi: Function) {
 
       const res = await callApi('POST', '/api/v1/features', body, teamId);
       if (res.error && res.error.code !== 'FEATURE_EXISTS') {
-        await ack({ response_action: 'errors', errors: { feature_slug_block: res.error.message || 'Failed to create feature.' } });
+        await ack({
+          response_action: 'errors',
+          errors: { feature_slug_block: res.error.message || 'Failed to create feature.' },
+        });
         return;
       }
     } catch (err: any) {
-      await ack({ response_action: 'errors', errors: { feature_slug_block: err.message || 'Failed to create feature.' } });
+      await ack({
+        response_action: 'errors',
+        errors: { feature_slug_block: err.message || 'Failed to create feature.' },
+      });
       return;
     }
 
     // Create channel config
     try {
-      const res = await callApi('POST', '/api/v1/channel-configs', {
-        slack_channel_id: metadata.channelId,
-        product: productSlug,
-        feature: featureSlug,
-      }, teamId);
+      const res = await callApi(
+        'POST',
+        '/api/v1/channel-configs',
+        {
+          slack_channel_id: metadata.channelId,
+          product: productSlug,
+          feature: featureSlug,
+        },
+        teamId,
+      );
 
       if (res.error) {
-        await ack({ response_action: 'errors', errors: { feature_slug_block: res.error.message || 'Failed to link channel.' } });
+        await ack({
+          response_action: 'errors',
+          errors: { feature_slug_block: res.error.message || 'Failed to link channel.' },
+        });
         return;
       }
     } catch (err: any) {
-      await ack({ response_action: 'errors', errors: { feature_slug_block: err.message || 'Failed to link channel.' } });
+      await ack({
+        response_action: 'errors',
+        errors: { feature_slug_block: err.message || 'Failed to link channel.' },
+      });
       return;
     }
 

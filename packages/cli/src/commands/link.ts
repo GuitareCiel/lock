@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { apiPost } from '../lib/api-client.js';
 
 function detectLinkType(ref: string): string {

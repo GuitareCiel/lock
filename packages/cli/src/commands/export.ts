@@ -1,8 +1,8 @@
 import fs from 'node:fs';
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { getConfig } from '../lib/config.js';
+import { Command } from 'commander';
 import { apiGet } from '../lib/api-client.js';
+import { getConfig } from '../lib/config.js';
 
 interface Lock {
   short_id: string;
@@ -64,17 +64,13 @@ function generateMarkdown(locks: Lock[]): string {
     }
 
     // Sort scope groups: architectural > major > minor
-    const sortedScopes = [...byScope.entries()].sort(
-      ([a], [b]) => (SCOPE_WEIGHT[a] ?? 2) - (SCOPE_WEIGHT[b] ?? 2),
-    );
+    const sortedScopes = [...byScope.entries()].sort(([a], [b]) => (SCOPE_WEIGHT[a] ?? 2) - (SCOPE_WEIGHT[b] ?? 2));
 
     for (const [scope, scopeLocks] of sortedScopes) {
       lines.push('');
       lines.push(`### ${SCOPE_LABEL[scope] ?? scope}`);
       for (const lock of scopeLocks) {
-        lines.push(
-          `- **${lock.short_id}**: ${lock.message} *(${lock.author.name}, ${formatDate(lock.created_at)})*`,
-        );
+        lines.push(`- **${lock.short_id}**: ${lock.message} *(${lock.author.name}, ${formatDate(lock.created_at)})*`);
       }
     }
   }
@@ -111,9 +107,7 @@ export const exportCommand = new Command('export')
       const locks: Lock[] = result.locks ?? result ?? [];
 
       if (!Array.isArray(locks) || locks.length === 0) {
-        console.log(
-          chalk.yellow('No active decisions found. File not written.'),
-        );
+        console.log(chalk.yellow('No active decisions found. File not written.'));
         return;
       }
 
@@ -147,11 +141,7 @@ export const exportCommand = new Command('export')
 
       const markdown = knowledgeSection + generateMarkdown(locks);
       fs.writeFileSync(opts.output, markdown, 'utf-8');
-      console.log(
-        chalk.green(
-          `Exported ${locks.length} active decisions to ${opts.output}`,
-        ),
-      );
+      console.log(chalk.green(`Exported ${locks.length} active decisions to ${opts.output}`));
     } catch (err: any) {
       console.error(chalk.red(`Error: ${err.message}`));
       process.exit(1);

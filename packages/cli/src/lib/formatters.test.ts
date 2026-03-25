@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatLockList, formatLock, formatConflicts, formatSupersession } from './formatters.js';
+import { describe, expect, it } from 'vitest';
+import { formatConflicts, formatLock, formatLockList, formatSupersession } from './formatters.js';
 
 describe('formatLockList', () => {
   it('returns "No locks found." for empty array', () => {

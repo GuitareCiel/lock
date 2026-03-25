@@ -1,11 +1,10 @@
 export interface Credentials {
   api_url: string;
-  api_key?: string;           // API key auth (self-hosted)
-  access_token?: string;      // JWT auth (hosted)
-  refresh_token?: string;     // token refresh (hosted)
-  workspace_id?: string;      // active workspace (hosted)
-  email?: string;             // user email (from browser login)
-  name?: string;              // user display name (from browser login)
+  access_token?: string;
+  refresh_token?: string;
+  workspace_id?: string;
+  email?: string;
+  name?: string;
 }
 
 export interface ProjectConfig {

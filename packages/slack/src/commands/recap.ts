@@ -1,5 +1,5 @@
+import { formatError, formatRecapDigest } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatRecapDigest, formatError } from '../lib/formatters.js';
 
 /**
  * Parse a --since value like "7d", "30d", or an ISO date into an ISO date string.
@@ -27,11 +27,7 @@ function parseSince(value: string): string {
  * - --since <7d|30d|ISO date>
  * - Org-wide recap if no product specified and no channel config
  */
-export async function handleRecap(
-  command: ParsedCommand,
-  channelId: string,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleRecap(command: ParsedCommand, channelId: string, callApi: Function): Promise<any[]> {
   let product = command.flags.product;
 
   // If no --product flag, try channel config

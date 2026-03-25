@@ -1,7 +1,7 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { getConfig } from '../lib/config.js';
+import { Command } from 'commander';
 import { apiGet } from '../lib/api-client.js';
+import { getConfig } from '../lib/config.js';
 
 export const recapCommand = new Command('recap')
   .description('Show a summary of recent decisions')
@@ -57,7 +57,9 @@ export const recapCommand = new Command('recap')
       }
 
       if (summary.reverts > 0 || summary.supersessions > 0) {
-        console.log(`  ${chalk.dim('Reverts:')} ${summary.reverts}  ${chalk.dim('Supersessions:')} ${summary.supersessions}`);
+        console.log(
+          `  ${chalk.dim('Reverts:')} ${summary.reverts}  ${chalk.dim('Supersessions:')} ${summary.supersessions}`,
+        );
       }
 
       // Top contributors
@@ -80,9 +82,7 @@ export const recapCommand = new Command('recap')
         console.log('');
         for (const lock of keyDecisions) {
           const scopeFn =
-            lock.scope === 'architectural' ? chalk.red :
-            lock.scope === 'major' ? chalk.yellow :
-            chalk.dim;
+            lock.scope === 'architectural' ? chalk.red : lock.scope === 'major' ? chalk.yellow : chalk.dim;
           const typeBadge = lock.decision_type ? ` [${lock.decision_type}]` : '';
           console.log(`  ${scopeFn(`[${lock.scope}]`)}${typeBadge} ${chalk.cyan(lock.short_id)}: ${lock.message}`);
           console.log(`    ${chalk.dim(`${lock.author?.name || 'unknown'} | ${lock.feature?.name || 'unknown'}`)}`);

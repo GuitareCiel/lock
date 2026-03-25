@@ -1,6 +1,6 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { locks, features, products } from '../db/schema.js';
+import { features, locks, products } from '../db/schema.js';
 import { generateEmbedding } from '../lib/embeddings.js';
 import { classifyRelationship, hasLLM } from '../lib/llm.js';
 import type { ConflictResult, SupersessionResult } from '../types.js';
@@ -9,8 +9,20 @@ import type { ConflictResult, SupersessionResult } from '../types.js';
  * Simple word-based Jaccard similarity for text fallback.
  */
 function textSimilarity(a: string, b: string): number {
-  const wordsA = new Set(a.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean));
-  const wordsB = new Set(b.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean));
+  const wordsA = new Set(
+    a
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(Boolean),
+  );
+  const wordsB = new Set(
+    b
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(Boolean),
+  );
   if (wordsA.size === 0 || wordsB.size === 0) return 0;
   let intersection = 0;
   for (const w of wordsA) {
@@ -26,7 +38,7 @@ export async function detectConflicts(
   message: string,
   scope: string,
   sourceContext: string | null,
-  featureName: string
+  featureName: string,
 ): Promise<{ conflicts: ConflictResult[]; supersession: SupersessionResult }> {
   // Step 1: Try vector-based search (requires OpenAI embeddings)
   const embedding = await generateEmbedding(message);
@@ -36,7 +48,7 @@ export async function detectConflicts(
   if (embedding) {
     // Update the lock with its embedding
     await db.execute(
-      sql`UPDATE locks SET embedding = ${`[${embedding.join(',')}]`}::vector WHERE id = ${lockId}::uuid`
+      sql`UPDATE locks SET embedding = ${`[${embedding.join(',')}]`}::vector WHERE id = ${lockId}::uuid`,
     );
 
     // Find similar active locks via pgvector cosine similarity
@@ -50,7 +62,7 @@ export async function detectConflicts(
             AND l.id != ${lockId}::uuid
             AND l.embedding IS NOT NULL
           ORDER BY l.embedding <=> ${`[${embedding.join(',')}]`}::vector
-          LIMIT 5`
+          LIMIT 5`,
     );
 
     similar = (candidates.rows as any[]).filter((r) => r.similarity > 0.75);
@@ -64,7 +76,7 @@ export async function detectConflicts(
             AND l.status = 'active'
             AND l.id != ${lockId}::uuid
           ORDER BY l.created_at DESC
-          LIMIT 20`
+          LIMIT 20`,
     );
 
     similar = (candidates.rows as any[])
@@ -90,10 +102,10 @@ export async function detectConflicts(
           context: candidate.source_context,
           featureName: candidate.feature_name,
         },
-        { message, scope, context: sourceContext, featureName }
+        { message, scope, context: sourceContext, featureName },
       );
       return { candidate, result };
-    })
+    }),
   );
 
   const conflicts: ConflictResult[] = [];
@@ -168,7 +180,7 @@ export async function preCheckConflicts(
             AND l.status = 'active'
             AND l.embedding IS NOT NULL
           ORDER BY l.embedding <=> ${`[${embedding.join(',')}]`}::vector
-          LIMIT 5`
+          LIMIT 5`,
     );
     similar = (candidates.rows as any[]).filter((r) => r.similarity > 0.75);
   } else {
@@ -180,7 +192,7 @@ export async function preCheckConflicts(
           WHERE l.product_id = ${product.id}::uuid
             AND l.status = 'active'
           ORDER BY l.created_at DESC
-          LIMIT 20`
+          LIMIT 20`,
     );
     similar = (candidates.rows as any[])
       .map((r) => ({ ...r, similarity: textSimilarity(message, r.message) }))
@@ -203,10 +215,10 @@ export async function preCheckConflicts(
           context: candidate.source_context,
           featureName: candidate.feature_name,
         },
-        { message, scope, context: null, featureName }
+        { message, scope, context: null, featureName },
       );
       return { candidate, result };
-    })
+    }),
   );
 
   const conflicts: ConflictResult[] = [];

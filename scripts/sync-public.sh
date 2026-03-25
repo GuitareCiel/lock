@@ -18,8 +18,6 @@ rsync -av --delete \
   --exclude='packages/saas/' \
   --exclude='packages/web/' \
   --exclude='.github/' \
-  --exclude='packages/cli/src/commands/signup.ts' \
-  --exclude='packages/cli/src/lib/device-flow.ts' \
   --exclude='packages/cli/src/templates/' \
   --exclude='node_modules/' \
   --exclude='dist/' \
@@ -48,7 +46,7 @@ echo "Verifying no SaaS imports leaked..."
 
 LEAKED=0
 # Check for imports that should only exist in saas package
-for pattern in "billing-service" "user-service" "email-service" "usage-service" "./jwt" "bcryptjs" "stripe" "@fastify/cookie" "posthog-node" "posthog"; do
+for pattern in "billing-service" "user-service" "email-service" "usage-service" "./jwt" "bcryptjs" "stripe" "@fastify/cookie" "posthog-node" "posthog" "@sentry/node" "@sentry/nextjs" "sentry"; do
   # Search for actual imports/requires in core (not comments)
   if grep -rn "import.*$pattern\|require.*$pattern" "$TARGET/packages/core/src/" 2>/dev/null | grep -v "node_modules" | grep -v ".d.ts" > /dev/null 2>&1; then
     echo "  WARNING: Found '$pattern' in core package"

@@ -16,11 +16,7 @@ export function registerImportCommit(app: App, callApi: Function): void {
       let userName = userId;
       try {
         const userInfo = await (app.client as any).users.info({ user: userId });
-        userName =
-          userInfo.user?.profile?.display_name ||
-          userInfo.user?.real_name ||
-          userInfo.user?.name ||
-          userId;
+        userName = userInfo.user?.profile?.display_name || userInfo.user?.real_name || userInfo.user?.name || userId;
       } catch {
         // Fall back to user ID
       }

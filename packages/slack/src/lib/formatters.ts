@@ -25,7 +25,10 @@ function buildEnrichmentActions(shortId: string, currentScope: string): any {
         options: [
           { text: { type: 'plain_text', text: 'minor' }, value: JSON.stringify({ short_id: shortId, scope: 'minor' }) },
           { text: { type: 'plain_text', text: 'major' }, value: JSON.stringify({ short_id: shortId, scope: 'major' }) },
-          { text: { type: 'plain_text', text: 'architectural' }, value: JSON.stringify({ short_id: shortId, scope: 'architectural' }) },
+          {
+            text: { type: 'plain_text', text: 'architectural' },
+            value: JSON.stringify({ short_id: shortId, scope: 'architectural' }),
+          },
         ],
       },
       {
@@ -63,9 +66,11 @@ export function formatExtractionPreview(extraction: any, metadata: any): any[] {
   const blocks: any[] = [];
 
   const scopeEmoji =
-    extraction.scope === 'architectural' ? ':rotating_light:' :
-    extraction.scope === 'major' ? ':large_orange_diamond:' :
-    ':small_blue_diamond:';
+    extraction.scope === 'architectural'
+      ? ':rotating_light:'
+      : extraction.scope === 'major'
+        ? ':large_orange_diamond:'
+        : ':small_blue_diamond:';
 
   blocks.push({
     type: 'section',
@@ -162,9 +167,11 @@ export function formatLockCommit(data: any): any[] {
 
   // Main lock block
   const scopeEmoji =
-    lock.scope === 'architectural' ? ':rotating_light:' :
-    lock.scope === 'major' ? ':large_orange_diamond:' :
-    ':small_blue_diamond:';
+    lock.scope === 'architectural'
+      ? ':rotating_light:'
+      : lock.scope === 'major'
+        ? ':large_orange_diamond:'
+        : ':small_blue_diamond:';
 
   const typeBadge = lock.decision_type ? ` | :label: ${lock.decision_type}` : '';
 
@@ -320,15 +327,20 @@ export function formatLockList(locks: any[]): any[] {
 
     for (const lock of group.locks) {
       const scopeEmoji =
-        lock.scope === 'architectural' ? ':rotating_light:' :
-        lock.scope === 'major' ? ':large_orange_diamond:' :
-        ':small_blue_diamond:';
+        lock.scope === 'architectural'
+          ? ':rotating_light:'
+          : lock.scope === 'major'
+            ? ':large_orange_diamond:'
+            : ':small_blue_diamond:';
 
       const statusBadge =
-        lock.status === 'active' ? '' :
-        lock.status === 'superseded' ? ' ~superseded~' :
-        lock.status === 'reverted' ? ' ~reverted~' :
-        ` _(${lock.status})_`;
+        lock.status === 'active'
+          ? ''
+          : lock.status === 'superseded'
+            ? ' ~superseded~'
+            : lock.status === 'reverted'
+              ? ' ~reverted~'
+              : ` _(${lock.status})_`;
 
       const featureSlug = lock.feature?.slug || lock.feature || '';
       const featureLabel = featureSlug ? `${featureSlug} | ` : '';
@@ -463,9 +475,7 @@ export function formatRecap(locks: any[], productSlug: string): any[] {
   // Sort locks within each feature by scope weight: architectural first
   const scopeWeight: Record<string, number> = { architectural: 0, major: 1, minor: 2 };
   for (const group of byFeature.values()) {
-    group.locks.sort((a: any, b: any) =>
-      (scopeWeight[a.scope] ?? 2) - (scopeWeight[b.scope] ?? 2),
-    );
+    group.locks.sort((a: any, b: any) => (scopeWeight[a.scope] ?? 2) - (scopeWeight[b.scope] ?? 2));
   }
 
   // Derive product display name from first lock
@@ -493,14 +503,14 @@ export function formatRecap(locks: any[], productSlug: string): any[] {
 
     for (const lock of group.locks) {
       const scopeEmoji =
-        lock.scope === 'architectural' ? ':rotating_light:' :
-        lock.scope === 'major' ? ':large_orange_diamond:' :
-        ':small_blue_diamond:';
+        lock.scope === 'architectural'
+          ? ':rotating_light:'
+          : lock.scope === 'major'
+            ? ':large_orange_diamond:'
+            : ':small_blue_diamond:';
 
       const authorName = lock.author?.name || lock.author_name || 'unknown';
-      const date = lock.created_at
-        ? new Date(lock.created_at).toLocaleDateString()
-        : '';
+      const date = lock.created_at ? new Date(lock.created_at).toLocaleDateString() : '';
 
       const typeBadge = lock.decision_type ? ` [${lock.decision_type}]` : '';
 
@@ -568,9 +578,7 @@ export function formatRecapDigest(recap: any, product?: string): any[] {
 
   // Top contributors
   if (top_contributors && top_contributors.length > 0) {
-    const contribStr = top_contributors
-      .map((c: any) => `${c.name} (${c.count})`)
-      .join(', ');
+    const contribStr = top_contributors.map((c: any) => `${c.name} (${c.count})`).join(', ');
     blocks.push({
       type: 'context',
       elements: [{ type: 'mrkdwn', text: `*Top contributors:* ${contribStr}` }],
@@ -603,9 +611,7 @@ export function formatRecapDigest(recap: any, product?: string): any[] {
       text: { type: 'mrkdwn', text: '*Key Decisions*' },
     });
     for (const lock of keyDecisions) {
-      const scopeEmoji =
-        lock.scope === 'architectural' ? ':rotating_light:' :
-        ':large_orange_diamond:';
+      const scopeEmoji = lock.scope === 'architectural' ? ':rotating_light:' : ':large_orange_diamond:';
       const typeBadge = lock.decision_type ? ` [${lock.decision_type}]` : '';
       blocks.push({
         type: 'section',
@@ -638,9 +644,11 @@ export function formatImportCandidates(candidates: any[], metadata: any): any[] 
   for (let i = 0; i < maxDisplay; i++) {
     const candidate = candidates[i];
     const scopeEmoji =
-      candidate.scope === 'architectural' ? ':rotating_light:' :
-      candidate.scope === 'major' ? ':large_orange_diamond:' :
-      ':small_blue_diamond:';
+      candidate.scope === 'architectural'
+        ? ':rotating_light:'
+        : candidate.scope === 'major'
+          ? ':large_orange_diamond:'
+          : ':small_blue_diamond:';
 
     blocks.push({ type: 'divider' });
     blocks.push({
@@ -716,14 +724,15 @@ export function formatKnowledge(knowledge: any): any[] {
       : knowledge.product?.name || 'unknown';
     blocks.push({
       type: 'section',
-      text: { type: 'mrkdwn', text: `:bulb: No knowledge synthesized yet for *${scope}*. Commit some decisions first.` },
+      text: {
+        type: 'mrkdwn',
+        text: `:bulb: No knowledge synthesized yet for *${scope}*. Commit some decisions first.`,
+      },
     });
     return blocks;
   }
 
-  const scope = knowledge.feature
-    ? `${knowledge.product.name} / ${knowledge.feature.name}`
-    : knowledge.product.name;
+  const scope = knowledge.feature ? `${knowledge.product.name} / ${knowledge.feature.name}` : knowledge.product.name;
 
   blocks.push({
     type: 'section',
@@ -765,10 +774,12 @@ export function formatKnowledge(knowledge: any): any[] {
     const date = first.updated_at ? new Date(first.updated_at).toLocaleDateString() : 'unknown';
     blocks.push({
       type: 'context',
-      elements: [{
-        type: 'mrkdwn',
-        text: `v${first.version} | ${first.lock_count_at_generation} decisions | Updated ${date}`,
-      }],
+      elements: [
+        {
+          type: 'mrkdwn',
+          text: `v${first.version} | ${first.lock_count_at_generation} decisions | Updated ${date}`,
+        },
+      ],
     });
   }
 
@@ -808,11 +819,7 @@ export function formatSuccess(message: string): any[] {
 /**
  * Format a conflict warning with Commit Anyway / Cancel buttons.
  */
-export function formatConflictWarning(
-  conflicts: any[],
-  supersession: any,
-  commitPayload: any,
-): any[] {
+export function formatConflictWarning(conflicts: any[], supersession: any, commitPayload: any): any[] {
   const blocks: any[] = [];
 
   blocks.push({

@@ -1,9 +1,10 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { apiGet } from '../lib/api-client.js';
+import { Command } from 'commander';
+import { apiGet, apiPost } from '../lib/api-client.js';
+import { slugify } from '../lib/slugify.js';
 
 export const featuresCommand = new Command('features')
-  .description('List features')
+  .description('Manage features')
   .option('--product <slug>', 'Filter by product')
   .action(async (opts) => {
     const params = new URLSearchParams();
@@ -17,7 +18,7 @@ export const featuresCommand = new Command('features')
       const features = result.features ?? result ?? [];
 
       if (!Array.isArray(features) || features.length === 0) {
-        console.log(chalk.dim('No features found.'));
+        console.log(chalk.dim('No features found. Create one with: lock features create "My Feature" --product <slug>'));
         return;
       }
 
@@ -32,6 +33,26 @@ export const featuresCommand = new Command('features')
           console.log(`    ${chalk.dim(f.description)}`);
         }
       }
+    } catch (err: any) {
+      console.error(chalk.red(`Error: ${err.message}`));
+      process.exit(1);
+    }
+  });
+
+featuresCommand
+  .command('create <name>')
+  .description('Create a new feature')
+  .requiredOption('--product <slug>', 'Product slug')
+  .option('--description <desc>', 'Feature description')
+  .option('--slug <slug>', 'Custom slug (auto-generated from name if omitted)')
+  .action(async (name: string, opts: { product: string; description?: string; slug?: string }) => {
+    try {
+      const slug = opts.slug || slugify(name);
+      const body: Record<string, string> = { slug, name, product: opts.product };
+      if (opts.description) body.description = opts.description;
+
+      const result = await apiPost<any>('/api/v1/features', body);
+      console.log(chalk.green(`Feature created: ${result.name} (${result.slug}) in product ${opts.product}`));
     } catch (err: any) {
       console.error(chalk.red(`Error: ${err.message}`));
       process.exit(1);

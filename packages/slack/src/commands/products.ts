@@ -1,13 +1,10 @@
+import { formatError, formatProductList } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatProductList, formatError } from '../lib/formatters.js';
 
 /**
  * Handle `@lock products` — list all products with lock counts.
  */
-export async function handleProducts(
-  _command: ParsedCommand,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleProducts(_command: ParsedCommand, callApi: Function): Promise<any[]> {
   try {
     const response = await callApi('GET', '/api/v1/products');
 

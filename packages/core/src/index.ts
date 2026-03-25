@@ -29,20 +29,30 @@ if (isEntryPoint) {
   });
 }
 
+export type { BuildAppOptions } from './app.js';
 // Public API exports (used by @uselock/saas and other consumers)
 export { buildApp } from './app.js';
-export type { BuildAppOptions } from './app.js';
 export { db, pool } from './db/client.js';
 export * as schema from './db/schema.js';
-export { authMiddleware, registerAuthStrategy, clearAuthStrategies } from './lib/auth.js';
 export type { AuthStrategy } from './lib/auth.js';
+export { authMiddleware, clearAuthStrategies, registerAuthStrategy } from './lib/auth.js';
+export type { AnalyticsProvider, CommitHookContext } from './lib/hooks.js';
 export {
-  onBeforeCommit, onAfterCommit, clearHooks,
-  registerSlackTokenProvider, getSlackTokenProvider,
-  registerConflictDetectionGate, shouldRunConflictDetection,
-  registerKnowledgeSynthesisGate, shouldRunKnowledgeSynthesis,
-  registerSearchGate, shouldUseFullSearch,
-  registerBeforeCreateProduct, runBeforeCreateProductHooks,
-  registerAnalyticsProvider, trackEvent, captureException, identifyUser,
+  captureException,
+  clearHooks,
+  getSlackTokenProvider,
+  identifyUser,
+  onAfterCommit,
+  onBeforeCommit,
+  registerAnalyticsProvider,
+  registerBeforeCreateProduct,
+  registerConflictDetectionGate,
+  registerKnowledgeSynthesisGate,
+  registerSearchGate,
+  registerSlackTokenProvider,
+  runBeforeCreateProductHooks,
+  shouldRunConflictDetection,
+  shouldRunKnowledgeSynthesis,
+  shouldUseFullSearch,
+  trackEvent,
 } from './lib/hooks.js';
-export type { CommitHookContext, AnalyticsProvider } from './lib/hooks.js';

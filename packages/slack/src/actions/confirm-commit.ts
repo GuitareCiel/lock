@@ -1,4 +1,4 @@
-import { formatLockCommit, formatError } from '../lib/formatters.js';
+import { formatError, formatLockCommit } from '../lib/formatters.js';
 
 /**
  * Handle [Commit] button press from extraction preview.
@@ -37,14 +37,20 @@ export function registerConfirmCommit(app: any, callApi: Function) {
       const response = await callApi('POST', '/api/v1/locks', body, teamId);
 
       if (response.error) {
-        await respond({ blocks: formatError(response.error.code || 'LOCK_FAILED', response.error.message), replace_original: true });
+        await respond({
+          blocks: formatError(response.error.code || 'LOCK_FAILED', response.error.message),
+          replace_original: true,
+        });
         return;
       }
 
       const blocks = formatLockCommit(response.data || response);
       await respond({ blocks, replace_original: true });
     } catch (err: any) {
-      await respond({ blocks: formatError('LOCK_FAILED', err.message || 'Failed to commit lock.'), replace_original: true });
+      await respond({
+        blocks: formatError('LOCK_FAILED', err.message || 'Failed to commit lock.'),
+        replace_original: true,
+      });
     }
   });
 }

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../db/client.js';
 import { apiKeys, workspaces } from '../db/schema.js';
 
@@ -41,10 +41,7 @@ export function clearAuthStrategies(): void {
   authStrategies.length = 0;
 }
 
-export async function authMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function authMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   // 1. Internal service-to-service auth
   const internalSecret = request.headers['x-internal-secret'] as string | undefined;
   const expectedSecret = process.env.INTERNAL_SECRET;
@@ -72,7 +69,10 @@ export async function authMiddleware(
       return;
     }
     return reply.status(400).send({
-      error: { code: 'MISSING_WORKSPACE', message: 'X-Workspace-Id or X-Workspace-Team-Id header required for internal auth' },
+      error: {
+        code: 'MISSING_WORKSPACE',
+        message: 'X-Workspace-Id or X-Workspace-Team-Id header required for internal auth',
+      },
     });
   }
 
@@ -106,10 +106,7 @@ export async function authMiddleware(
   }
 
   // Update last_used_at
-  await db
-    .update(apiKeys)
-    .set({ lastUsedAt: new Date() })
-    .where(eq(apiKeys.id, key.id));
+  await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id));
 
   request.workspaceId = key.workspaceId;
 }

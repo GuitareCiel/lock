@@ -16,7 +16,6 @@
     "dev:saas": "pnpm --filter @uselock/saas dev",
     "dev:slack": "pnpm --filter @uselock/slack dev",
     "dev:cli": "pnpm --filter @uselock/cli dev",
-    "dev:mcp": "pnpm --filter @uselock/mcp dev",
     "dev:web": "pnpm --filter @uselock/web dev",
     "sync:public": "bash scripts/sync-public.sh",
     "build": "pnpm -r build",
@@ -31,6 +30,7 @@
     "test:e2e:web": "pnpm --filter @uselock/web test:e2e"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.8",
     "concurrently": "^8.2.0",
     "typescript": "^5.4.0",
     "vitest": "^3.0.0"

@@ -1,14 +1,14 @@
-import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import { healthRoutes } from './routes/health.js';
-import { lockRoutes } from './routes/locks.js';
-import { productRoutes } from './routes/products.js';
-import { featureRoutes } from './routes/features.js';
-import { channelConfigRoutes } from './routes/channel-configs.js';
-import { knowledgeRoutes } from './routes/knowledge.js';
+import Fastify, { type FastifyInstance } from 'fastify';
 import { authMiddleware } from './lib/auth.js';
 import { captureException } from './lib/hooks.js';
+import { channelConfigRoutes } from './routes/channel-configs.js';
+import { featureRoutes } from './routes/features.js';
+import { healthRoutes } from './routes/health.js';
+import { knowledgeRoutes } from './routes/knowledge.js';
+import { lockRoutes } from './routes/locks.js';
+import { productRoutes } from './routes/products.js';
 
 export interface BuildAppOptions {
   logger?: boolean | object;
@@ -39,7 +39,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       fastify.log.error('INTERNAL_SECRET is missing or set to a known weak value. Refusing to start in production.');
       process.exit(1);
     } else {
-      fastify.log.warn('WARNING: INTERNAL_SECRET is missing or set to a known weak value. Do not use this in production.');
+      fastify.log.warn(
+        'WARNING: INTERNAL_SECRET is missing or set to a known weak value. Do not use this in production.',
+      );
     }
   }
 
@@ -51,8 +53,12 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   }
 
   // Register CORS
-  const corsOrigins = options.corsOrigins ??
-    (process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) || false);
+  const corsOrigins =
+    options.corsOrigins ??
+    (process.env.CORS_ORIGINS?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) ||
+      false);
   await fastify.register(cors, {
     origin: Array.isArray(corsOrigins) && corsOrigins.length > 0 ? corsOrigins : false,
     credentials: true,
@@ -79,20 +85,31 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     async (api) => {
       api.addHook('preHandler', authMiddleware);
 
-      await api.register(lockRoutes, { prefix: '/locks' });
-      await api.register(productRoutes, { prefix: '/products' });
-      await api.register(featureRoutes, { prefix: '/features' });
-      await api.register(channelConfigRoutes, { prefix: '/channel-configs' });
-      await api.register(knowledgeRoutes, { prefix: '/knowledge' });
+      // Core routes require a valid workspaceId (UUID, not empty string)
+      await api.register(async (core) => {
+        core.addHook('preHandler', async (request, reply) => {
+          if (!request.workspaceId) {
+            return reply.status(403).send({
+              error: { code: 'NO_WORKSPACE', message: 'No workspace. Complete onboarding first.' },
+            });
+          }
+        });
 
-      // Additional protected routes (e.g., SaaS billing, workspaces)
+        await core.register(lockRoutes, { prefix: '/locks' });
+        await core.register(productRoutes, { prefix: '/products' });
+        await core.register(featureRoutes, { prefix: '/features' });
+        await core.register(channelConfigRoutes, { prefix: '/channel-configs' });
+        await core.register(knowledgeRoutes, { prefix: '/knowledge' });
+      });
+
+      // Additional protected routes (e.g., SaaS billing, workspaces) — no workspace guard
       if (options.protectedRoutes) {
         for (const { routes, prefix } of options.protectedRoutes) {
           await api.register(routes, { prefix });
         }
       }
     },
-    { prefix: '/api/v1' }
+    { prefix: '/api/v1' },
   );
 
   // Global error handler

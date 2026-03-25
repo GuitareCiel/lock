@@ -1,5 +1,5 @@
+import { formatError, formatImportCandidates } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatImportCandidates, formatError } from '../lib/formatters.js';
 
 interface ImportContext {
   channelId: string;
@@ -18,10 +18,7 @@ interface ImportContext {
  *
  * Requires the channel to be configured with @lock init first.
  */
-export async function handleImport(
-  command: ParsedCommand,
-  context: ImportContext,
-): Promise<any[]> {
+export async function handleImport(command: ParsedCommand, context: ImportContext): Promise<any[]> {
   const { channelId, client, callApi } = context;
 
   // Get channel config
@@ -81,11 +78,7 @@ export async function handleImport(
     if (userCache.has(userId)) return userCache.get(userId)!;
     try {
       const info = await client.users.info({ user: userId });
-      const name =
-        info.user?.profile?.display_name ||
-        info.user?.real_name ||
-        info.user?.name ||
-        userId;
+      const name = info.user?.profile?.display_name || info.user?.real_name || info.user?.name || userId;
       userCache.set(userId, name);
       return name;
     } catch {
@@ -103,7 +96,7 @@ export async function handleImport(
         text: m.text,
         author: await resolveUser(m.user || 'unknown'),
         timestamp: new Date(parseFloat(m.ts) * 1000).toISOString(),
-      }))
+      })),
   );
 
   if (formatted.length === 0) {
@@ -126,13 +119,15 @@ export async function handleImport(
     const candidates = data.candidates || [];
 
     if (candidates.length === 0) {
-      return [{
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `:mag: Analyzed ${formatted.length} messages from the last ${days} day(s). No decisions found.`,
+      return [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `:mag: Analyzed ${formatted.length} messages from the last ${days} day(s). No decisions found.`,
+          },
         },
-      }];
+      ];
     }
 
     return formatImportCandidates(candidates, { product, feature });

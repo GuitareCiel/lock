@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { buildTestApp, seedTestData, cleanupTestData, closePool, type TestSeed } from './setup.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../db/client.js';
 import { workspaces } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { buildTestApp, cleanupTestData, closePool, seedTestData, type TestSeed } from './setup.js';
 
 const hasDb = !!process.env.DATABASE_URL;
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET || 'change-me-to-a-random-string';
@@ -20,10 +20,7 @@ describe.skipIf(!hasDb)('Internal service auth (X-Internal-Secret)', () => {
     seed = await seedTestData();
 
     // Create a second workspace for isolation tests
-    const [ws2] = await db
-      .insert(workspaces)
-      .values({ name: 'Second Workspace' })
-      .returning();
+    const [ws2] = await db.insert(workspaces).values({ name: 'Second Workspace' }).returning();
     secondWorkspaceId = ws2.id;
   });
 

@@ -1,7 +1,7 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { getConfig } from '../lib/config.js';
+import { Command } from 'commander';
 import { apiPost } from '../lib/api-client.js';
+import { getConfig } from '../lib/config.js';
 
 export const checkCommand = new Command('check')
   .description('Check for existing decisions relevant to what you are about to build')
@@ -32,24 +32,23 @@ export const checkCommand = new Command('check')
       console.log('');
 
       locks.forEach((lock: any, i: number) => {
-        const scopeFn =
-          lock.scope === 'architectural' ? chalk.red :
-          lock.scope === 'major' ? chalk.yellow :
-          chalk.dim;
+        const scopeFn = lock.scope === 'architectural' ? chalk.red : lock.scope === 'major' ? chalk.yellow : chalk.dim;
 
         const authorName = lock.author?.name ?? lock.author_name ?? 'unknown';
         const featureSlug = lock.feature?.slug ?? lock.feature ?? '';
-        const date = lock.created_at
-          ? new Date(lock.created_at).toLocaleDateString()
-          : '';
+        const date = lock.created_at ? new Date(lock.created_at).toLocaleDateString() : '';
 
         const typeBadge = lock.decision_type ? ` [${lock.decision_type}]` : '';
-        console.log(`${i + 1}. ${scopeFn(`[${lock.scope}]`)}${typeBadge} ${chalk.cyan(lock.short_id)}: ${lock.message}`);
+        console.log(
+          `${i + 1}. ${scopeFn(`[${lock.scope}]`)}${typeBadge} ${chalk.cyan(lock.short_id)}: ${lock.message}`,
+        );
         console.log(`   ${chalk.dim(`Feature: ${featureSlug} | Author: ${authorName} | ${date}`)}`);
         console.log('');
       });
 
-      console.log(chalk.dim('If your work contradicts a decision, use `lock commit` to record a superseding decision.'));
+      console.log(
+        chalk.dim('If your work contradicts a decision, use `lock commit` to record a superseding decision.'),
+      );
     } catch (err: any) {
       console.error(chalk.red(`Error: ${err.message}`));
       process.exit(1);

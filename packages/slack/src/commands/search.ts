@@ -1,5 +1,5 @@
+import { formatError, formatLockList } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatLockList, formatError } from '../lib/formatters.js';
 
 /**
  * Handle `@lock search "query"`.
@@ -7,10 +7,7 @@ import { formatLockList, formatError } from '../lib/formatters.js';
  * Performs a semantic search across locks using POST /api/v1/locks/search.
  * Optionally filters by product and feature via flags.
  */
-export async function handleSearch(
-  command: ParsedCommand,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleSearch(command: ParsedCommand, callApi: Function): Promise<any[]> {
   const query = command.message;
 
   if (!query || query.trim().length === 0) {

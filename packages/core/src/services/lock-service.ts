@@ -1,22 +1,28 @@
-import { eq, and, sql, desc, ilike, gte } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { locks, lockLinks, products, features } from '../db/schema.js';
+import { features, lockLinks, locks, products } from '../db/schema.js';
+import {
+  runAfterCommitHooks,
+  runBeforeCommitHooks,
+  runBeforeCreateProductHooks,
+  shouldRunConflictDetection,
+  shouldRunKnowledgeSynthesis,
+  shouldUseFullSearch,
+} from '../lib/hooks.js';
 import { generateShortId } from '../lib/id.js';
-import { detectConflicts } from './conflict-service.js';
-import { notifySlack } from './notify-service.js';
-import { updateKnowledgeIncremental } from './knowledge-service.js';
 import { inferDecisionType } from '../lib/llm.js';
-import { runBeforeCommitHooks, runAfterCommitHooks } from '../lib/hooks.js';
-import { shouldRunConflictDetection, shouldRunKnowledgeSynthesis, runBeforeCreateProductHooks, shouldUseFullSearch } from '../lib/hooks.js';
 import type {
-  CreateLockRequest,
-  RevertLockRequest,
   AddLinkRequest,
-  ListLocksQuery,
-  SearchLocksRequest,
+  CreateLockRequest,
   DecisionType,
+  ListLocksQuery,
+  RevertLockRequest,
+  SearchLocksRequest,
 } from '../types.js';
 import { DEFAULT_FEATURE } from '../types.js';
+import { detectConflicts } from './conflict-service.js';
+import { updateKnowledgeIncremental } from './knowledge-service.js';
+import { notifySlack } from './notify-service.js';
 
 // Auto-create product/feature by slug (upsert)
 async function upsertProduct(workspaceId: string, slug: string) {
@@ -29,10 +35,7 @@ async function upsertProduct(workspaceId: string, slug: string) {
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
-    const [created] = await db
-      .insert(products)
-      .values({ workspaceId, slug, name })
-      .returning();
+    const [created] = await db.insert(products).values({ workspaceId, slug, name }).returning();
     product = created;
   }
   return product;
@@ -47,10 +50,7 @@ async function upsertFeature(productId: string, slug: string) {
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
-    const [created] = await db
-      .insert(features)
-      .values({ productId, slug, name })
-      .returning();
+    const [created] = await db.insert(features).values({ productId, slug, name }).returning();
     feature = created;
   }
   return feature;
@@ -115,7 +115,7 @@ export async function commitLock(workspaceId: string, req: CreateLockRequest) {
         lockId: lock.id,
         linkType: link.type,
         linkRef: link.ref,
-      }))
+      })),
     );
   }
 
@@ -129,7 +129,7 @@ export async function commitLock(workspaceId: string, req: CreateLockRequest) {
           req.message,
           req.scope ?? 'minor',
           req.source.context ?? null,
-          feature.name
+          feature.name,
         )
       : Promise.resolve({ conflicts: [] as any[], supersession: { detected: false as const, supersedes: null } }),
     req.decision_type
@@ -141,10 +141,7 @@ export async function commitLock(workspaceId: string, req: CreateLockRequest) {
 
   // Update lock with inferred decision type
   if (typeResult.decision_type) {
-    await db
-      .update(locks)
-      .set({ decisionType: typeResult.decision_type })
-      .where(eq(locks.id, lock.id));
+    await db.update(locks).set({ decisionType: typeResult.decision_type }).where(eq(locks.id, lock.id));
   }
 
   // Handle supersession
@@ -153,14 +150,8 @@ export async function commitLock(workspaceId: string, req: CreateLockRequest) {
       where: eq(locks.shortId, supersession.supersedes.short_id),
     });
     if (superseded) {
-      await db
-        .update(locks)
-        .set({ supersededById: lock.id, status: 'superseded' })
-        .where(eq(locks.id, superseded.id));
-      await db
-        .update(locks)
-        .set({ supersedesId: superseded.id })
-        .where(eq(locks.id, lock.id));
+      await db.update(locks).set({ supersededById: lock.id, status: 'superseded' }).where(eq(locks.id, superseded.id));
+      await db.update(locks).set({ supersedesId: superseded.id }).where(eq(locks.id, lock.id));
     }
   }
 
@@ -189,15 +180,17 @@ export async function commitLock(workspaceId: string, req: CreateLockRequest) {
   }
 
   // Update knowledge (fire-and-forget)
-  shouldRunKnowledgeSynthesis(workspaceId).then(should => {
-    if (should) {
-      updateKnowledgeIncremental(workspaceId, product.id, feature.id, {
-        message: req.message,
-        scope: req.scope ?? 'minor',
-        decisionType: typeResult.decision_type || null,
-      }).catch(() => {});
-    }
-  }).catch(() => {});
+  shouldRunKnowledgeSynthesis(workspaceId)
+    .then((should) => {
+      if (should) {
+        updateKnowledgeIncremental(workspaceId, product.id, feature.id, {
+          message: req.message,
+          scope: req.scope ?? 'minor',
+          decisionType: typeResult.decision_type || null,
+        }).catch(() => {});
+      }
+    })
+    .catch(() => {});
 
   // Fetch links for response
   const links = await db.query.lockLinks.findMany({
@@ -305,7 +298,7 @@ export async function listLocks(workspaceId: string, query: ListLocksQuery) {
         decision_type: lock.decisionType,
         created_at: lock.createdAt,
       };
-    })
+    }),
   );
 
   return { locks: enriched, total: enriched.length };
@@ -359,11 +352,7 @@ export async function getLock(workspaceId: string, shortId: string) {
   };
 }
 
-export async function revertLock(
-  workspaceId: string,
-  shortId: string,
-  req: RevertLockRequest
-) {
+export async function revertLock(workspaceId: string, shortId: string, req: RevertLockRequest) {
   const original = await db.query.locks.findFirst({
     where: and(eq(locks.workspaceId, workspaceId), eq(locks.shortId, shortId)),
   });
@@ -398,10 +387,7 @@ export async function revertLock(
     .returning();
 
   // Update original lock
-  await db
-    .update(locks)
-    .set({ status: 'reverted', revertedById: revertLock.id })
-    .where(eq(locks.id, original.id));
+  await db.update(locks).set({ status: 'reverted', revertedById: revertLock.id }).where(eq(locks.id, original.id));
 
   // Update knowledge (fire-and-forget)
   updateKnowledgeIncremental(workspaceId, original.productId, original.featureId, {
@@ -473,11 +459,7 @@ export async function updateLockMetadata(
     throw new Error('No valid fields to update');
   }
 
-  const [updated] = await db
-    .update(locks)
-    .set(setValues)
-    .where(eq(locks.id, lock.id))
-    .returning();
+  const [updated] = await db.update(locks).set(setValues).where(eq(locks.id, lock.id)).returning();
 
   const product = await db.query.products.findFirst({
     where: eq(products.id, updated.productId),
@@ -500,10 +482,7 @@ export async function updateLockMetadata(
 
 export async function searchLocks(workspaceId: string, req: SearchLocksRequest) {
   // Text-based fallback search (semantic search works when embeddings are available)
-  const conditions: any[] = [
-    eq(locks.workspaceId, workspaceId),
-    eq(locks.status, 'active'),
-  ];
+  const conditions: any[] = [eq(locks.workspaceId, workspaceId), eq(locks.status, 'active')];
 
   if (req.product) {
     const product = await db.query.products.findFirst({
@@ -549,7 +528,7 @@ export async function searchLocks(workspaceId: string, req: SearchLocksRequest) 
               AND l.status = 'active'
               AND l.embedding IS NOT NULL
             ORDER BY l.embedding <=> ${vectorStr}::vector
-            LIMIT 10`
+            LIMIT 10`,
       );
 
       return {
@@ -595,7 +574,7 @@ export async function searchLocks(workspaceId: string, req: SearchLocksRequest) 
         decision_type: lock.decisionType,
         created_at: lock.createdAt,
       };
-    })
+    }),
   );
 
   return { locks: enriched };
@@ -611,9 +590,7 @@ export async function getRecap(workspaceId: string, query: RecapQuery) {
   const conditions: any[] = [eq(locks.workspaceId, workspaceId)];
 
   // Date filter
-  const sinceDate = query.since
-    ? new Date(query.since)
-    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const sinceDate = query.since ? new Date(query.since) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   conditions.push(gte(locks.createdAt, sinceDate));
 
   if (query.product) {
@@ -621,12 +598,13 @@ export async function getRecap(workspaceId: string, query: RecapQuery) {
       where: and(eq(products.workspaceId, workspaceId), eq(products.slug, query.product)),
     });
     if (product) conditions.push(eq(locks.productId, product.id));
-    else return {
-      period: { from: sinceDate.toISOString(), to: new Date().toISOString() },
-      summary: { total_decisions: 0, by_scope: {}, by_type: {}, by_product: [], reverts: 0, supersessions: 0 },
-      decisions: [],
-      top_contributors: [],
-    };
+    else
+      return {
+        period: { from: sinceDate.toISOString(), to: new Date().toISOString() },
+        summary: { total_decisions: 0, by_scope: {}, by_type: {}, by_product: [], reverts: 0, supersessions: 0 },
+        decisions: [],
+        top_contributors: [],
+      };
   }
 
   const where = and(...conditions);
@@ -686,7 +664,7 @@ export async function getRecap(workspaceId: string, query: RecapQuery) {
         decision_type: lock.decisionType,
         created_at: lock.createdAt,
       };
-    })
+    }),
   );
 
   const topContributors = [...contributorMap.entries()]

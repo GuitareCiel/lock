@@ -1,28 +1,28 @@
 import 'dotenv/config';
 import { App, LogLevel } from '@slack/bolt';
-import { parseCommand } from './lib/parser.js';
+import { registerAddLink } from './actions/add-link.js';
+import { registerAddTags } from './actions/add-tags.js';
+import { registerCancelExtract } from './actions/cancel-extract.js';
+import { registerChangeScope } from './actions/change-scope.js';
+import { registerConfirmCommit } from './actions/confirm-commit.js';
+import { registerEditDecision } from './actions/edit-decision.js';
+import { registerForceCommit } from './actions/force-commit.js';
+import { registerImportCommit } from './actions/import-commit.js';
+import { registerInitChannel } from './actions/init-channel.js';
+import { handleDigest } from './commands/digest.js';
+import { handleFeatures } from './commands/features.js';
+import { handleImport } from './commands/import.js';
 import { handleInit } from './commands/init.js';
+import { handleKnowledge } from './commands/knowledge.js';
+import { handleLink } from './commands/link.js';
 import { handleLock } from './commands/lock.js';
 import { handleLog } from './commands/log.js';
 import { handleProducts } from './commands/products.js';
-import { handleFeatures } from './commands/features.js';
-import { handleRevert } from './commands/revert.js';
-import { handleLink } from './commands/link.js';
-import { handleSearch } from './commands/search.js';
 import { handleRecap } from './commands/recap.js';
-import { handleDigest } from './commands/digest.js';
-import { handleImport } from './commands/import.js';
-import { handleKnowledge } from './commands/knowledge.js';
+import { handleRevert } from './commands/revert.js';
+import { handleSearch } from './commands/search.js';
 import { formatError } from './lib/formatters.js';
-import { registerConfirmCommit } from './actions/confirm-commit.js';
-import { registerEditDecision } from './actions/edit-decision.js';
-import { registerCancelExtract } from './actions/cancel-extract.js';
-import { registerChangeScope } from './actions/change-scope.js';
-import { registerAddLink } from './actions/add-link.js';
-import { registerAddTags } from './actions/add-tags.js';
-import { registerImportCommit } from './actions/import-commit.js';
-import { registerForceCommit } from './actions/force-commit.js';
-import { registerInitChannel } from './actions/init-channel.js';
+import { parseCommand } from './lib/parser.js';
 import { startDigestScheduler } from './services/digest-scheduler.js';
 
 const LOCK_API_URL = process.env.LOCK_API_URL || 'http://localhost:3000';
@@ -44,12 +44,7 @@ const app = new App({
  * Wraps fetch with the base URL, internal auth headers, and
  * workspace team ID for tenant resolution.
  */
-async function callApi(
-  method: string,
-  path: string,
-  body?: any,
-  teamId?: string,
-): Promise<any> {
+async function callApi(method: string, path: string, body?: any, teamId?: string): Promise<any> {
   const url = `${LOCK_API_URL}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -92,11 +87,7 @@ app.event('app_mention', async ({ event, client, say }) => {
   let userName = userId;
   try {
     const userInfo = await client.users.info({ user: userId });
-    userName =
-      userInfo.user?.profile?.display_name ||
-      userInfo.user?.real_name ||
-      userInfo.user?.name ||
-      userId;
+    userName = userInfo.user?.profile?.display_name || userInfo.user?.real_name || userInfo.user?.name || userId;
   } catch {
     // Fall back to user ID if we can't resolve
   }
@@ -105,8 +96,7 @@ app.event('app_mention', async ({ event, client, say }) => {
   const command = parseCommand(text);
 
   // Create a team-scoped callApi wrapper
-  const teamCallApi = (method: string, path: string, body?: any) =>
-    callApi(method, path, body, teamId);
+  const teamCallApi = (method: string, path: string, body?: any) => callApi(method, path, body, teamId);
 
   let blocks: any[];
 

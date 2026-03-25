@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { locks } from '../db/schema.js';
 

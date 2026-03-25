@@ -1,6 +1,6 @@
-import type { ParsedCommand } from '../types.js';
+import { formatConflictWarning, formatError, formatExtractionPreview, formatLockCommit } from '../lib/formatters.js';
 import { getThreadContext } from '../lib/thread-context.js';
-import { formatLockCommit, formatExtractionPreview, formatError, formatConflictWarning } from '../lib/formatters.js';
+import type { ParsedCommand } from '../types.js';
 
 interface LockContext {
   channelId: string;
@@ -20,10 +20,7 @@ interface LockContext {
  * - polish: LLM cleans up user's phrasing, auto-commits
  * - explicit: Current behavior, direct commit with message + flags
  */
-export async function handleLock(
-  command: ParsedCommand,
-  context: LockContext,
-): Promise<any[]> {
+export async function handleLock(command: ParsedCommand, context: LockContext): Promise<any[]> {
   const { channelId, userId, userName, teamId, threadTs, client, callApi } = context;
 
   // Get channel config for product/feature
@@ -99,10 +96,7 @@ async function handleExtractMode(
   }
 
   if (!ctx.source.context) {
-    return formatError(
-      'NO_THREAD_CONTEXT',
-      'Could not read thread context. Try again or provide a decision directly.',
-    );
+    return formatError('NO_THREAD_CONTEXT', 'Could not read thread context. Try again or provide a decision directly.');
   }
 
   try {
@@ -226,10 +220,8 @@ async function handleExplicitMode(
       if (!extractResponse.error && extractResponse.data?.decision) {
         message = extractResponse.data.decision;
         if (!inferredScope) inferredScope = extractResponse.data.scope;
-        if (!inferredTags?.length && Array.isArray(extractResponse.data.tags))
-          inferredTags = extractResponse.data.tags;
-        if (!inferredType && extractResponse.data.decision_type)
-          inferredType = extractResponse.data.decision_type;
+        if (!inferredTags?.length && Array.isArray(extractResponse.data.tags)) inferredTags = extractResponse.data.tags;
+        if (!inferredType && extractResponse.data.decision_type) inferredType = extractResponse.data.decision_type;
       }
     } catch {
       // Keep original message and flags on extract failure
@@ -270,15 +262,11 @@ async function handleExplicitMode(
     });
 
     const checkResult = preCheck.data || preCheck;
-    const hasConflicts = (checkResult.conflicts?.length > 0) || checkResult.supersession?.detected;
+    const hasConflicts = checkResult.conflicts?.length > 0 || checkResult.supersession?.detected;
 
     if (hasConflicts) {
       // Show warning with Commit Anyway / Cancel buttons
-      return formatConflictWarning(
-        checkResult.conflicts || [],
-        checkResult.supersession,
-        body,
-      );
+      return formatConflictWarning(checkResult.conflicts || [], checkResult.supersession, body);
     }
 
     // No conflicts — commit directly

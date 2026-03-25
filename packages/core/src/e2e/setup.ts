@@ -1,15 +1,15 @@
-import crypto from 'crypto';
-import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import crypto from 'crypto';
+import { eq } from 'drizzle-orm';
+import Fastify, { type FastifyInstance } from 'fastify';
+import { db, pool } from '../db/client.js';
+import { apiKeys, channelConfigs, features, lockLinks, locks, products, workspaces } from '../db/schema.js';
+import { authMiddleware } from '../lib/auth.js';
+import { channelConfigRoutes } from '../routes/channel-configs.js';
+import { featureRoutes } from '../routes/features.js';
 import { healthRoutes } from '../routes/health.js';
 import { lockRoutes } from '../routes/locks.js';
 import { productRoutes } from '../routes/products.js';
-import { featureRoutes } from '../routes/features.js';
-import { channelConfigRoutes } from '../routes/channel-configs.js';
-import { authMiddleware } from '../lib/auth.js';
-import { db, pool } from '../db/client.js';
-import { workspaces, apiKeys, products, features, locks, lockLinks, channelConfigs } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
 
 export async function buildTestApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
@@ -29,7 +29,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
       await api.register(featureRoutes, { prefix: '/features' });
       await api.register(channelConfigRoutes, { prefix: '/channel-configs' });
     },
-    { prefix: '/api/v1' }
+    { prefix: '/api/v1' },
   );
 
   app.setErrorHandler((error: Error & { statusCode?: number }, request, reply) => {
@@ -53,10 +53,7 @@ export interface TestSeed {
 
 export async function seedTestData(): Promise<TestSeed> {
   // Create workspace
-  const [workspace] = await db
-    .insert(workspaces)
-    .values({ name: 'Test Workspace' })
-    .returning();
+  const [workspace] = await db.insert(workspaces).values({ name: 'Test Workspace' }).returning();
 
   // Create API key
   const rawKey = `lk_test_${crypto.randomBytes(16).toString('hex')}`;
@@ -79,7 +76,7 @@ export async function seedTestData(): Promise<TestSeed> {
 export async function cleanupTestData(workspaceId: string): Promise<void> {
   // Delete in order respecting foreign keys
   await db.delete(lockLinks).where(
-    eq(lockLinks.lockId, lockLinks.lockId) // will be scoped by subquery below
+    eq(lockLinks.lockId, lockLinks.lockId), // will be scoped by subquery below
   );
 
   // Delete lock_links for locks in this workspace

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import { db } from '../db/client.js';
-import { workspaces, locks, products } from '../db/schema.js';
 import { count } from 'drizzle-orm';
+import { db } from '../db/client.js';
+import { locks, products, workspaces } from '../db/schema.js';
 
 const TELEMETRY_URL = process.env.LOCK_TELEMETRY_URL ?? 'https://telemetry.uselock.ai/v1/ping';
 const HEARTBEAT_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -35,9 +35,18 @@ async function sendHeartbeat(log: { info: (msg: string) => void; debug: (msg: st
   try {
     const [id, lockCount, workspaceCount, productCount] = await Promise.all([
       getInstallId(),
-      db.select({ value: count() }).from(locks).then((r) => r[0]?.value ?? 0),
-      db.select({ value: count() }).from(workspaces).then((r) => r[0]?.value ?? 0),
-      db.select({ value: count() }).from(products).then((r) => r[0]?.value ?? 0),
+      db
+        .select({ value: count() })
+        .from(locks)
+        .then((r) => r[0]?.value ?? 0),
+      db
+        .select({ value: count() })
+        .from(workspaces)
+        .then((r) => r[0]?.value ?? 0),
+      db
+        .select({ value: count() })
+        .from(products)
+        .then((r) => r[0]?.value ?? 0),
     ]);
 
     const payload = {

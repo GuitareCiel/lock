@@ -1,5 +1,5 @@
+import { formatError, formatSuccess } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatSuccess, formatError } from '../lib/formatters.js';
 
 /**
  * Auto-detect the link type from a reference string.
@@ -39,10 +39,7 @@ function detectLinkType(ref: string): string {
  * Adds an external link to an existing lock. Auto-detects the link type
  * from the reference format.
  */
-export async function handleLink(
-  command: ParsedCommand,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleLink(command: ParsedCommand, callApi: Function): Promise<any[]> {
   const shortId = command.args[0];
   const ref = command.args[1];
 
@@ -65,9 +62,7 @@ export async function handleLink(
       return formatError(response.error.code || 'LINK_FAILED', response.error.message);
     }
 
-    return formatSuccess(
-      `Linked \`${shortId}\` to *${ref}* (${linkType}).`,
-    );
+    return formatSuccess(`Linked \`${shortId}\` to *${ref}* (${linkType}).`);
   } catch (err: any) {
     return formatError('LINK_FAILED', err.message || 'Failed to add link.');
   }

@@ -1,6 +1,6 @@
-import type { ParsedCommand } from '../types.js';
-import { formatSuccess, formatError } from '../lib/formatters.js';
+import { formatError, formatSuccess } from '../lib/formatters.js';
 import { addDigestConfig, removeDigestConfig } from '../services/digest-scheduler.js';
+import type { ParsedCommand } from '../types.js';
 
 /**
  * Handle `@lock digest` — configure scheduled digest posts.
@@ -10,11 +10,7 @@ import { addDigestConfig, removeDigestConfig } from '../services/digest-schedule
  *   @lock digest --schedule daily --hour 9
  *   @lock digest off — remove digest for this channel
  */
-export async function handleDigest(
-  command: ParsedCommand,
-  channelId: string,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleDigest(command: ParsedCommand, channelId: string, callApi: Function): Promise<any[]> {
   // Handle "off" to remove
   if (command.message?.trim().toLowerCase() === 'off') {
     const removed = removeDigestConfig(channelId);

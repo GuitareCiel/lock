@@ -44,7 +44,7 @@ else
     DRIZZLE_CONFIG="/app/packages/core/drizzle.config.ts"
     cd /app/packages/core
   fi
-  DRIZZLE_OUTPUT=$(npx drizzle-kit push --force --config="$DRIZZLE_CONFIG" 2>&1)
+  DRIZZLE_OUTPUT=$(yes | /app/packages/core/node_modules/.bin/drizzle-kit push --force --config="$DRIZZLE_CONFIG" 2>&1)
   DRIZZLE_EXIT=$?
   echo "$DRIZZLE_OUTPUT"
   if [ $DRIZZLE_EXIT -ne 0 ] || echo "$DRIZZLE_OUTPUT" | grep -qi "error:"; then

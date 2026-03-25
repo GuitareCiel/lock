@@ -1,5 +1,5 @@
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 import type { DecisionType, KnowledgeFacet } from '../types.js';
 import { VALID_DECISION_TYPES } from '../types.js';
@@ -93,13 +93,17 @@ export async function extractDecision(
 
   const prompt = `You are a product decision extraction assistant. Your job is to identify and articulate product decisions from team conversations.
 
-${mode === 'extract' ? `Extract the key product decision from this thread conversation. Look for conclusions, agreements, or final directions the team settled on. If no clear decision was made, return decision as null.` : `Clean up and polish the following user-provided decision statement. Use the thread context to make the decision self-contained and clear:
+${
+  mode === 'extract'
+    ? `Extract the key product decision from this thread conversation. Look for conclusions, agreements, or final directions the team settled on. If no clear decision was made, return decision as null.`
+    : `Clean up and polish the following user-provided decision statement. Use the thread context to make the decision self-contained and clear:
 - Resolve shorthand (e.g. "option A" or "we go with B") using the actual option text from the thread.
 - Include the topic/subject when it's clear from the thread (e.g. "TradingView attribution logo").
 - When a ticket or ID is mentioned in the thread (e.g. LIVE-25802, PROJ-123), include it in the decision if relevant.
 Keep the meaning intact; make it crisp, imperative/declarative. Do not change the substance.
 
-User's statement: "${userHint}"`}
+User's statement: "${userHint}"`
+}
 
 Thread context:
 ${threadContext}
@@ -141,7 +145,7 @@ export interface ClassificationResult {
 
 export async function classifyRelationship(
   existingLock: { message: string; scope: string; context?: string | null; featureName: string },
-  newLock: { message: string; scope: string; context?: string | null; featureName: string }
+  newLock: { message: string; scope: string; context?: string | null; featureName: string },
 ): Promise<ClassificationResult> {
   if (!hasLLM()) {
     return { relationship: 'no_relation', explanation: '' };
@@ -322,9 +326,9 @@ function prepareDecisionContext(
   }
 
   // For 51-200: keep architectural fully, summarize minor
-  const architectural = decisions.filter(d => d.scope === 'architectural');
-  const major = decisions.filter(d => d.scope === 'major');
-  const minor = decisions.filter(d => d.scope === 'minor');
+  const architectural = decisions.filter((d) => d.scope === 'architectural');
+  const major = decisions.filter((d) => d.scope === 'major');
+  const minor = decisions.filter((d) => d.scope === 'minor');
 
   const lines: string[] = [];
   if (architectural.length > 0) {

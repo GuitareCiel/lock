@@ -1,5 +1,5 @@
+import { formatError, formatLockCommit } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatLockCommit, formatError } from '../lib/formatters.js';
 
 /**
  * Handle `@lock revert <short_id> "reason"`.

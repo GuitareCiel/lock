@@ -1,15 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  formatLockList,
-  formatLockCommit,
-  formatProductList,
+  formatError,
+  formatExtractionPreview,
   formatFeatureList,
+  formatImportCandidates,
+  formatLockCommit,
+  formatLockList,
+  formatProductList,
   formatRecap,
   formatRecapDigest,
-  formatImportCandidates,
-  formatError,
   formatSuccess,
-  formatExtractionPreview,
 } from './formatters.js';
 
 function blocksText(blocks: any[]): string {
@@ -122,14 +122,10 @@ describe('formatLockCommit', () => {
       conflicts: [],
       supersession: { detected: false },
     });
-    const enrichment = blocks.find(
-      (b: any) => b.block_id && b.block_id.startsWith('enrichment_')
-    );
+    const enrichment = blocks.find((b: any) => b.block_id && b.block_id.startsWith('enrichment_'));
     expect(enrichment).toBeDefined();
     expect(enrichment.type).toBe('actions');
-    const changeScope = enrichment.elements.find(
-      (e: any) => e.action_id === 'change_scope'
-    );
+    const changeScope = enrichment.elements.find((e: any) => e.action_id === 'change_scope');
     expect(changeScope).toBeDefined();
   });
 });
@@ -141,9 +137,7 @@ describe('formatProductList', () => {
   });
 
   it('shows name, slug, and lock_count', () => {
-    const blocks = formatProductList([
-      { name: 'Trading', slug: 'trading', lock_count: 5 },
-    ]);
+    const blocks = formatProductList([{ name: 'Trading', slug: 'trading', lock_count: 5 }]);
     const text = blocksText(blocks);
     expect(text).toContain('Trading');
     expect(text).toContain('trading');
@@ -240,9 +234,7 @@ describe('formatRecap', () => {
     ];
     const blocks = formatRecap(locks, 'p');
     // Find the lock section blocks (those containing short_ids)
-    const lockBlocks = blocks.filter(
-      (b: any) => b.type === 'section' && b.text?.text?.includes('l-')
-    );
+    const lockBlocks = blocks.filter((b: any) => b.type === 'section' && b.text?.text?.includes('l-'));
     const ids = lockBlocks.map((b: any) => {
       const match = b.text.text.match(/l-\w+/);
       return match?.[0];
@@ -304,28 +296,31 @@ describe('formatRecapDigest', () => {
   });
 
   it('shows stats and key decisions', () => {
-    const blocks = formatRecapDigest({
-      period: { from: '2026-01-01T00:00:00Z', to: '2026-01-08T00:00:00Z' },
-      summary: {
-        total_decisions: 3,
-        by_scope: { major: 2, minor: 1 },
-        by_type: { technical: 2, product: 1 },
-        by_product: [],
-        reverts: 0,
-        supersessions: 1,
-      },
-      decisions: [
-        {
-          short_id: 'l-111',
-          message: 'Use Redis',
-          scope: 'major',
-          decision_type: 'technical',
-          author: { name: 'alice' },
-          feature: { name: 'Cache' },
+    const blocks = formatRecapDigest(
+      {
+        period: { from: '2026-01-01T00:00:00Z', to: '2026-01-08T00:00:00Z' },
+        summary: {
+          total_decisions: 3,
+          by_scope: { major: 2, minor: 1 },
+          by_type: { technical: 2, product: 1 },
+          by_product: [],
+          reverts: 0,
+          supersessions: 1,
         },
-      ],
-      top_contributors: [{ name: 'alice', count: 3 }],
-    }, 'trading');
+        decisions: [
+          {
+            short_id: 'l-111',
+            message: 'Use Redis',
+            scope: 'major',
+            decision_type: 'technical',
+            author: { name: 'alice' },
+            feature: { name: 'Cache' },
+          },
+        ],
+        top_contributors: [{ name: 'alice', count: 3 }],
+      },
+      'trading',
+    );
     const text = blocksText(blocks);
     expect(text).toContain('Recap');
     expect(text).toContain('3 decision');
@@ -388,7 +383,7 @@ describe('formatExtractionPreview', () => {
   it('shows reasoning text when present', () => {
     const blocks = formatExtractionPreview(
       { ...baseExtraction, reasoning: 'Thread discussed caching strategy' },
-      metadata
+      metadata,
     );
     const text = blocksText(blocks);
     expect(text).toContain('Thread discussed caching strategy');

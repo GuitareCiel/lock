@@ -1,7 +1,7 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { getConfig } from '../lib/config.js';
+import { Command } from 'commander';
 import { apiGet } from '../lib/api-client.js';
+import { getConfig } from '../lib/config.js';
 import { formatLockList } from '../lib/formatters.js';
 
 export const logCommand = new Command('log')

@@ -6,17 +6,41 @@ export function registerAddLink(app: any, callApi: Function) {
   // Handle both jira and figma buttons
   app.action('add_link_jira', async ({ action, ack, body, client }: any) => {
     await ack();
-    await openLinkModal(client, body.trigger_id, action.value, 'jira', 'Add Jira Ticket', 'e.g. TRADE-442', body.team?.id || '');
+    await openLinkModal(
+      client,
+      body.trigger_id,
+      action.value,
+      'jira',
+      'Add Jira Ticket',
+      'e.g. TRADE-442',
+      body.team?.id || '',
+    );
   });
 
   app.action('add_link_figma', async ({ action, ack, body, client }: any) => {
     await ack();
-    await openLinkModal(client, body.trigger_id, action.value, 'figma', 'Add Figma Link', 'e.g. https://figma.com/...', body.team?.id || '');
+    await openLinkModal(
+      client,
+      body.trigger_id,
+      action.value,
+      'figma',
+      'Add Figma Link',
+      'e.g. https://figma.com/...',
+      body.team?.id || '',
+    );
   });
 
   app.action('add_link_linear', async ({ action, ack, body, client }: any) => {
     await ack();
-    await openLinkModal(client, body.trigger_id, action.value, 'linear', 'Add Linear Issue', 'e.g. ENG-42 or https://linear.app/...', body.team?.id || '');
+    await openLinkModal(
+      client,
+      body.trigger_id,
+      action.value,
+      'linear',
+      'Add Linear Issue',
+      'e.g. ENG-42 or https://linear.app/...',
+      body.team?.id || '',
+    );
   });
 
   // Handle modal submission
@@ -28,10 +52,15 @@ export function registerAddLink(app: any, callApi: Function) {
     const linkRef = values.link_ref_block.link_ref_input.value;
 
     try {
-      await callApi('POST', `/api/v1/locks/${metadata.short_id}/link`, {
-        link_type: metadata.link_type,
-        link_ref: linkRef,
-      }, metadata.teamId || view.team_id || '');
+      await callApi(
+        'POST',
+        `/api/v1/locks/${metadata.short_id}/link`,
+        {
+          link_type: metadata.link_type,
+          link_ref: linkRef,
+        },
+        metadata.teamId || view.team_id || '',
+      );
     } catch {
       // Modal already closed — best-effort
     }

@@ -1,11 +1,7 @@
+import { formatError, formatKnowledge } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatKnowledge, formatError } from '../lib/formatters.js';
 
-export async function handleKnowledge(
-  command: ParsedCommand,
-  channelId: string,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleKnowledge(command: ParsedCommand, channelId: string, callApi: Function): Promise<any[]> {
   let product = command.flags.product;
   let feature = command.flags.feature;
 

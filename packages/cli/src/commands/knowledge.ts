@@ -1,7 +1,7 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { getConfig } from '../lib/config.js';
+import { Command } from 'commander';
 import { apiGet, apiPost } from '../lib/api-client.js';
+import { getConfig } from '../lib/config.js';
 
 interface KnowledgeEntry {
   facet: string;
@@ -71,14 +71,12 @@ export const knowledgeCommand = new Command('knowledge')
       if (!result.facets || result.facets.length === 0) {
         const scope = feature
           ? `${result.product?.name ?? product} / ${result.feature?.name ?? feature}`
-          : result.product?.name ?? product;
+          : (result.product?.name ?? product);
         console.log(chalk.yellow(`No knowledge synthesized yet for ${scope}. Commit some decisions first.`));
         return;
       }
 
-      const scope = result.feature
-        ? `${result.product.name} / ${result.feature.name}`
-        : result.product.name;
+      const scope = result.feature ? `${result.product.name} / ${result.feature.name}` : result.product.name;
 
       console.log('');
       console.log(chalk.bold(`Knowledge — ${scope}`));

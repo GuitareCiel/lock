@@ -1,13 +1,17 @@
+import { and, eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { eq, and } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { channelConfigs, products, features } from '../db/schema.js';
+import { channelConfigs, features, products } from '../db/schema.js';
 import { DEFAULT_FEATURE } from '../types.js';
 
 export async function channelConfigRoutes(fastify: FastifyInstance) {
   // Create channel → product+feature mapping
   fastify.post('/', async (request, reply) => {
-    const { slack_channel_id, product, feature: featureInput } = request.body as {
+    const {
+      slack_channel_id,
+      product,
+      feature: featureInput,
+    } = request.body as {
       slack_channel_id: string;
       product: string;
       feature?: string;
@@ -26,10 +30,7 @@ export async function channelConfigRoutes(fastify: FastifyInstance) {
 
     // Find or create product
     let prod = await db.query.products.findFirst({
-      where: and(
-        eq(products.workspaceId, request.workspaceId),
-        eq(products.slug, product)
-      ),
+      where: and(eq(products.workspaceId, request.workspaceId), eq(products.slug, product)),
     });
     if (!prod) {
       const name = product

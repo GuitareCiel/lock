@@ -1,5 +1,5 @@
-import type { ParsedCommand } from '../types.js';
 import { formatError, formatSuccess } from '../lib/formatters.js';
+import type { ParsedCommand } from '../types.js';
 
 /**
  * Handle `@lock init`.

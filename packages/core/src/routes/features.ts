@@ -1,5 +1,5 @@
+import { and, eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { eq, and } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { features, products } from '../db/schema.js';
 import { trackEvent } from '../lib/hooks.js';
@@ -12,10 +12,7 @@ export async function featureRoutes(fastify: FastifyInstance) {
     let rows;
     if (product) {
       const prod = await db.query.products.findFirst({
-        where: and(
-          eq(products.workspaceId, request.workspaceId),
-          eq(products.slug, product)
-        ),
+        where: and(eq(products.workspaceId, request.workspaceId), eq(products.slug, product)),
       });
       if (!prod) {
         return reply.status(404).send({
@@ -35,9 +32,7 @@ export async function featureRoutes(fastify: FastifyInstance) {
         const feats = await db.query.features.findMany({
           where: eq(features.productId, prod.id),
         });
-        allFeatures.push(
-          ...feats.map((f) => ({ ...f, productSlug: prod.slug, productName: prod.name }))
-        );
+        allFeatures.push(...feats.map((f) => ({ ...f, productSlug: prod.slug, productName: prod.name })));
       }
       return {
         data: {
@@ -55,10 +50,7 @@ export async function featureRoutes(fastify: FastifyInstance) {
     }
 
     const prod = await db.query.products.findFirst({
-      where: and(
-        eq(products.workspaceId, request.workspaceId),
-        eq(products.slug, product!)
-      ),
+      where: and(eq(products.workspaceId, request.workspaceId), eq(products.slug, product!)),
     });
 
     return {
@@ -92,10 +84,7 @@ export async function featureRoutes(fastify: FastifyInstance) {
     }
 
     const prod = await db.query.products.findFirst({
-      where: and(
-        eq(products.workspaceId, request.workspaceId),
-        eq(products.slug, product)
-      ),
+      where: and(eq(products.workspaceId, request.workspaceId), eq(products.slug, product)),
     });
     if (!prod) {
       return reply.status(404).send({
@@ -112,10 +101,7 @@ export async function featureRoutes(fastify: FastifyInstance) {
       });
     }
 
-    const [feature] = await db
-      .insert(features)
-      .values({ productId: prod.id, slug, name, description })
-      .returning();
+    const [feature] = await db.insert(features).values({ productId: prod.id, slug, name, description }).returning();
 
     trackEvent(request.workspaceId, 'feature_created', { slug: feature.slug, name: feature.name, product: prod.slug });
     return reply.status(201).send({
@@ -167,11 +153,7 @@ export async function featureRoutes(fastify: FastifyInstance) {
     if (description !== undefined) updates.description = description;
     if (name !== undefined) updates.name = name;
 
-    const [updated] = await db
-      .update(features)
-      .set(updates)
-      .where(eq(features.id, feature.id))
-      .returning();
+    const [updated] = await db.update(features).set(updates).where(eq(features.id, feature.id)).returning();
 
     return {
       data: {

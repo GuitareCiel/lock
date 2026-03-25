@@ -5,12 +5,12 @@
 #   2. Click "Create New App" → "From an app manifest"
 #   3. Select your workspace
 #   4. Paste this YAML and click "Create"
-#   5. Go to "Install App" → "Install to Workspace"
-#   6. Copy the tokens into your .env file:
-#      - Bot User OAuth Token (xoxb-...) → SLACK_BOT_TOKEN
-#      - Signing Secret (Settings → Basic Information) → SLACK_SIGNING_SECRET
-#      - App-Level Token (Settings → Basic Information → Generate) → SLACK_APP_TOKEN
-#        (when generating, add the "connections:write" scope)
+#   5. Copy these from Settings → Basic Information into your .env:
+#      - Client ID → SLACK_CLIENT_ID
+#      - Client Secret → SLACK_CLIENT_SECRET
+#      - Signing Secret → SLACK_SIGNING_SECRET
+#   6. Update the redirect_url below with your actual API domain
+#   7. Customers connect their own Slack via the OAuth flow in the dashboard
 #
 # After installing, invite @Lock to channels where your team
 # makes product decisions, then run: @lock init --product <slug> --feature <slug>
@@ -42,6 +42,8 @@ features:
     messages_tab_read_only_enabled: false
 
 oauth_config:
+  redirect_urls:
+    - https://YOUR_API_DOMAIN/api/v1/integrations/slack/callback
   scopes:
     bot:
       # Receive @lock mentions in channels

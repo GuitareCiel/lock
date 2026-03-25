@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { apiGet } from '../lib/api-client.js';
 import { formatLock } from '../lib/formatters.js';
 

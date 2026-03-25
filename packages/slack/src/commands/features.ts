@@ -1,13 +1,10 @@
+import { formatError, formatFeatureList } from '../lib/formatters.js';
 import type { ParsedCommand } from '../types.js';
-import { formatFeatureList, formatError } from '../lib/formatters.js';
 
 /**
  * Handle `@lock features` — list features, optionally filtered by product.
  */
-export async function handleFeatures(
-  command: ParsedCommand,
-  callApi: Function,
-): Promise<any[]> {
+export async function handleFeatures(command: ParsedCommand, callApi: Function): Promise<any[]> {
   const params = new URLSearchParams();
 
   if (command.flags.product) {

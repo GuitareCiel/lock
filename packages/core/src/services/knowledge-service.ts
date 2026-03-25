@@ -1,9 +1,9 @@
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { knowledge, locks, products, features } from '../db/schema.js';
-import { synthesizeKnowledgeFacet, synthesizeKnowledgeFacetFull, hasLLM } from '../lib/llm.js';
+import { features, knowledge, locks, products } from '../db/schema.js';
+import { hasLLM, synthesizeKnowledgeFacet, synthesizeKnowledgeFacetFull } from '../lib/llm.js';
+import type { KnowledgeEntry, KnowledgeFacet, KnowledgeResponse } from '../types.js';
 import { KNOWLEDGE_FACETS } from '../types.js';
-import type { KnowledgeFacet, KnowledgeEntry, KnowledgeResponse } from '../types.js';
 
 export async function getKnowledge(
   workspaceId: string,
@@ -39,12 +39,12 @@ export async function getKnowledge(
 
   // Check if knowledge is stale (lock count drifted >50%)
   const lockCount = await countLocks(workspaceId, product.id, feature?.id);
-  const isStale = rows.length > 0 && rows.some(r => {
-    const drift = Math.abs(lockCount - r.lockCountAtGeneration);
-    return r.lockCountAtGeneration > 0
-      ? drift / r.lockCountAtGeneration > 0.5
-      : lockCount > 0;
-  });
+  const isStale =
+    rows.length > 0 &&
+    rows.some((r) => {
+      const drift = Math.abs(lockCount - r.lockCountAtGeneration);
+      return r.lockCountAtGeneration > 0 ? drift / r.lockCountAtGeneration > 0.5 : lockCount > 0;
+    });
 
   // If missing or stale, regenerate
   if (rows.length === 0 || isStale) {
@@ -102,7 +102,7 @@ export async function updateKnowledgeIncremental(
     .orderBy(desc(locks.createdAt))
     .limit(10);
 
-  const recentMapped = recentFeatureDecisions.map(d => ({
+  const recentMapped = recentFeatureDecisions.map((d) => ({
     message: d.message,
     scope: d.scope,
     decisionType: d.decisionType,
@@ -205,10 +205,7 @@ async function updateSingleFacet(
   lockCount: number,
 ): Promise<void> {
   // Fetch existing facet
-  const conditions = [
-    eq(knowledge.productId, productId),
-    eq(knowledge.facet, facet),
-  ];
+  const conditions = [eq(knowledge.productId, productId), eq(knowledge.facet, facet)];
   if (featureId) {
     conditions.push(eq(knowledge.featureId, featureId));
   } else {
@@ -291,28 +288,22 @@ async function regenerateKnowledgeInternal(
       }),
     );
   } else {
-    decisionsForLLM = allDecisions.map(d => ({
-      message: d.message, scope: d.scope, decisionType: d.decisionType,
+    decisionsForLLM = allDecisions.map((d) => ({
+      message: d.message,
+      scope: d.scope,
+      decisionType: d.decisionType,
     }));
   }
 
   const lockCount = allDecisions.length;
 
   for (const facet of KNOWLEDGE_FACETS) {
-    const content = await synthesizeKnowledgeFacetFull(
-      facet,
-      decisionsForLLM,
-      productName,
-      featureName,
-    );
+    const content = await synthesizeKnowledgeFacetFull(facet, decisionsForLLM, productName, featureName);
 
     if (!content) continue;
 
     // Upsert
-    const upsertConditions = [
-      eq(knowledge.productId, productId),
-      eq(knowledge.facet, facet),
-    ];
+    const upsertConditions = [eq(knowledge.productId, productId), eq(knowledge.facet, facet)];
     if (featureId) {
       upsertConditions.push(eq(knowledge.featureId, featureId));
     } else {
@@ -348,16 +339,8 @@ async function regenerateKnowledgeInternal(
   }
 }
 
-async function countLocks(
-  workspaceId: string,
-  productId: string,
-  featureId?: string,
-): Promise<number> {
-  const conditions = [
-    eq(locks.workspaceId, workspaceId),
-    eq(locks.productId, productId),
-    eq(locks.status, 'active'),
-  ];
+async function countLocks(workspaceId: string, productId: string, featureId?: string): Promise<number> {
+  const conditions = [eq(locks.workspaceId, workspaceId), eq(locks.productId, productId), eq(locks.status, 'active')];
   if (featureId) {
     conditions.push(eq(locks.featureId, featureId));
   }

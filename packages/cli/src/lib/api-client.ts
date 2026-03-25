@@ -1,5 +1,5 @@
-import { getCredentials, saveCredentials } from './credentials.js';
 import type { Credentials } from '../types.js';
+import { getCredentials, saveCredentials } from './credentials.js';
 
 class ApiError extends Error {
   public status: number;
@@ -20,8 +20,6 @@ function buildHeaders(creds: Credentials): Record<string, string> {
 
   if (creds.access_token) {
     headers['Authorization'] = `Bearer ${creds.access_token}`;
-  } else if (creds.api_key) {
-    headers['Authorization'] = `Bearer ${creds.api_key}`;
   }
 
   if (creds.workspace_id) {
@@ -43,7 +41,7 @@ async function refreshTokens(creds: Credentials): Promise<Credentials | null> {
 
     if (!res.ok) return null;
 
-    const json = await res.json() as { access_token: string; refresh_token: string };
+    const json = (await res.json()) as { access_token: string; refresh_token: string };
     const updated: Credentials = {
       ...creds,
       access_token: json.access_token,
@@ -79,7 +77,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     }
   }
 
-  const json = await res.json() as { data?: T; error?: { code: string; message: string } };
+  const json = (await res.json()) as { data?: T; error?: { code: string; message: string } };
 
   if (!res.ok) {
     const errCode = json.error?.code ?? 'UNKNOWN_ERROR';

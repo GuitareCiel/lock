@@ -1,4 +1,4 @@
-import { extractDecision, extractDecisionsFromChunk, type ExtractionResult, type BatchDecision } from '../lib/llm.js';
+import { type BatchDecision, type ExtractionResult, extractDecision, extractDecisionsFromChunk } from '../lib/llm.js';
 
 export interface ExtractRequest {
   thread_context: string;
@@ -8,12 +8,7 @@ export interface ExtractRequest {
 }
 
 export async function extractFromThread(req: ExtractRequest): Promise<ExtractionResult> {
-  return extractDecision(
-    req.thread_context,
-    req.user_hint,
-    req.product,
-    req.feature,
-  );
+  return extractDecision(req.thread_context, req.user_hint, req.product, req.feature);
 }
 
 export interface BatchExtractRequest {
@@ -30,7 +25,7 @@ export async function extractBatchDecisions(req: BatchExtractRequest): Promise<{
   const { messages, product, feature } = req;
 
   // Chunk messages into groups of 15
-  const chunks: typeof messages[] = [];
+  const chunks: (typeof messages)[] = [];
   for (let i = 0; i < messages.length; i += 15) {
     chunks.push(messages.slice(i, i + 15));
   }
@@ -38,9 +33,7 @@ export async function extractBatchDecisions(req: BatchExtractRequest): Promise<{
   const allCandidates: ExtractedCandidate[] = [];
 
   for (const chunk of chunks) {
-    const chunkContext = chunk
-      .map((m) => `${m.author} (${m.timestamp}): ${m.text}`)
-      .join('\n');
+    const chunkContext = chunk.map((m) => `${m.author} (${m.timestamp}): ${m.text}`).join('\n');
 
     const decisions = await extractDecisionsFromChunk(chunkContext, product, feature);
 

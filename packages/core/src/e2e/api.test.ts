@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { buildTestApp, seedTestData, cleanupTestData, closePool, type TestSeed } from './setup.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { buildTestApp, cleanupTestData, closePool, seedTestData, type TestSeed } from './setup.js';
 
 const hasDb = !!process.env.DATABASE_URL;
 

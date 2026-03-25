@@ -1,9 +1,9 @@
-import { Command } from 'commander';
 import os from 'node:os';
 import chalk from 'chalk';
-import { getConfig } from '../lib/config.js';
+import { Command } from 'commander';
 import { apiPost } from '../lib/api-client.js';
-import { formatLock, formatConflicts, formatSupersession } from '../lib/formatters.js';
+import { getConfig } from '../lib/config.js';
+import { formatConflicts, formatLock, formatSupersession } from '../lib/formatters.js';
 
 export const commitCommand = new Command('commit')
   .description('Commit a new decision lock')

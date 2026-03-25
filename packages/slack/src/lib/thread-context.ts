@@ -14,11 +14,7 @@ async function resolveUserName(client: any, userId: string): Promise<string> {
 
   try {
     const result = await client.users.info({ user: userId });
-    const name =
-      result.user?.profile?.display_name ||
-      result.user?.real_name ||
-      result.user?.name ||
-      userId;
+    const name = result.user?.profile?.display_name || result.user?.real_name || result.user?.name || userId;
     userNameCache.set(userId, name);
     return name;
   } catch {
@@ -32,11 +28,7 @@ async function resolveUserName(client: any, userId: string): Promise<string> {
  * Fetches thread replies, resolves participant names, gets the thread
  * permalink, and builds a context snippet from the last 5 messages.
  */
-export async function getThreadContext(
-  client: any,
-  channelId: string,
-  threadTs: string,
-): Promise<ThreadContext> {
+export async function getThreadContext(client: any, channelId: string, threadTs: string): Promise<ThreadContext> {
   // Fetch all replies in the thread
   let allMessages: any[] = [];
   try {
@@ -59,9 +51,7 @@ export async function getThreadContext(
 
   // Resolve user names for all participants
   const participantIds = [...new Set(allMessages.map((m: any) => m.user).filter(Boolean))];
-  const participantNames = await Promise.all(
-    participantIds.map(async (id: string) => resolveUserName(client, id)),
-  );
+  const participantNames = await Promise.all(participantIds.map(async (id: string) => resolveUserName(client, id)));
 
   // Build message objects with resolved names
   const messages = await Promise.all(
@@ -73,9 +63,7 @@ export async function getThreadContext(
   );
 
   // Build a text snippet from the messages
-  const snippet = messages
-    .map((m) => `${m.userName || m.userId}: ${m.text}`)
-    .join('\n');
+  const snippet = messages.map((m) => `${m.userName || m.userId}: ${m.text}`).join('\n');
 
   // Get the thread permalink
   let permalink: string | undefined;

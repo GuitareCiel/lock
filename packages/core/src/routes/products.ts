@@ -1,7 +1,7 @@
+import { and, eq, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { products, locks } from '../db/schema.js';
+import { locks, products } from '../db/schema.js';
 import { trackEvent } from '../lib/hooks.js';
 
 export async function productRoutes(fastify: FastifyInstance) {
@@ -97,11 +97,7 @@ export async function productRoutes(fastify: FastifyInstance) {
     if (description !== undefined) updates.description = description;
     if (name !== undefined) updates.name = name;
 
-    const [updated] = await db
-      .update(products)
-      .set(updates)
-      .where(eq(products.id, product.id))
-      .returning();
+    const [updated] = await db.update(products).set(updates).where(eq(products.id, product.id)).returning();
 
     return {
       data: {

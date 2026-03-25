@@ -53,9 +53,7 @@ export function formatLock(lock: any): string {
   const authorSource = lock.author?.source ?? lock.author_source ?? '';
   lines.push(`  ${chalk.dim('Author:')}  ${authorName} ${chalk.dim('via')} ${authorSource}`);
 
-  const createdAt = lock.created_at
-    ? new Date(lock.created_at).toLocaleString()
-    : '';
+  const createdAt = lock.created_at ? new Date(lock.created_at).toLocaleString() : '';
   lines.push(`  ${chalk.dim('Date:')}    ${createdAt}`);
 
   // Tags
@@ -67,7 +65,9 @@ export function formatLock(lock: any): string {
   // Links
   const links: any[] = lock.links ?? [];
   if (links.length > 0) {
-    lines.push(`  ${chalk.dim('Links:')}   ${links.map((l: any) => `${l.link_type ?? l.type}: ${l.link_ref ?? l.ref}`).join(', ')}`);
+    lines.push(
+      `  ${chalk.dim('Links:')}   ${links.map((l: any) => `${l.link_type ?? l.type}: ${l.link_ref ?? l.ref}`).join(', ')}`,
+    );
   }
 
   // Source context
@@ -115,9 +115,7 @@ export function formatLockList(locks: any[]): string {
     const id = chalk.bold.cyan(lock.short_id);
     const scope = scopeFn(`[${lock.scope}]`);
     const status = statusBadge(lock.status);
-    const date = lock.created_at
-      ? new Date(lock.created_at).toLocaleDateString()
-      : '';
+    const date = lock.created_at ? new Date(lock.created_at).toLocaleDateString() : '';
     const author = lock.author?.name ?? lock.author_name ?? '';
 
     lines.push(`${id}  ${scope}  ${status}  ${chalk.dim(date)}  ${chalk.dim(author)}`);
@@ -139,9 +137,7 @@ export function formatConflicts(conflicts: any[]): string {
   lines.push('');
 
   for (const conflict of conflicts) {
-    const rel = conflict.relationship === 'potential_conflict'
-      ? chalk.red('CONFLICT')
-      : chalk.yellow('RELATED');
+    const rel = conflict.relationship === 'potential_conflict' ? chalk.red('CONFLICT') : chalk.yellow('RELATED');
 
     const lockId = chalk.cyan(conflict.lock?.short_id ?? 'unknown');
     lines.push(`  ${rel} with ${lockId}`);
