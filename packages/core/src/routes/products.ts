@@ -1,7 +1,7 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/client.js';
-import { locks, products } from '../db/schema.js';
+import { channelConfigs, features, knowledge, lockLinks, locks, products } from '../db/schema.js';
 import { trackEvent } from '../lib/hooks.js';
 
 export async function productRoutes(fastify: FastifyInstance) {
@@ -107,5 +107,42 @@ export async function productRoutes(fastify: FastifyInstance) {
         created_at: updated.createdAt,
       },
     };
+  });
+
+  // Delete product (cascades: features, locks, channel configs, knowledge)
+  fastify.delete('/:slug', async (request, reply) => {
+    const { slug } = request.params as { slug: string };
+
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.workspaceId, request.workspaceId), eq(products.slug, slug)),
+    });
+    if (!product) {
+      return reply.status(404).send({
+        error: { code: 'PRODUCT_NOT_FOUND', message: `Product "${slug}" not found` },
+      });
+    }
+
+    // Clear references from OTHER locks pointing to locks in this product
+    await db.execute(sql`UPDATE locks SET supersedes_id = NULL WHERE supersedes_id IN (SELECT id FROM locks WHERE product_id = ${product.id})`);
+    await db.execute(sql`UPDATE locks SET superseded_by_id = NULL WHERE superseded_by_id IN (SELECT id FROM locks WHERE product_id = ${product.id})`);
+    await db.execute(sql`UPDATE locks SET reverted_by_id = NULL WHERE reverted_by_id IN (SELECT id FROM locks WHERE product_id = ${product.id})`);
+
+    // Delete lock links
+    await db.execute(sql`DELETE FROM lock_links WHERE lock_id IN (SELECT id FROM locks WHERE product_id = ${product.id})`);
+
+    // Clear self-referential FKs then delete locks
+    await db.execute(sql`UPDATE locks SET supersedes_id = NULL, superseded_by_id = NULL, reverted_by_id = NULL WHERE product_id = ${product.id}`);
+    await db.execute(sql`DELETE FROM locks WHERE product_id = ${product.id}`);
+
+    // Delete related data
+    await db.execute(sql`DELETE FROM channel_configs WHERE product_id = ${product.id}`);
+    await db.execute(sql`DELETE FROM knowledge WHERE product_id = ${product.id}`);
+    await db.execute(sql`DELETE FROM features WHERE product_id = ${product.id}`);
+
+    // Delete product
+    await db.execute(sql`DELETE FROM products WHERE id = ${product.id}`);
+
+    trackEvent(request.workspaceId, 'product_deleted', { slug });
+    return { data: { ok: true } };
   });
 }

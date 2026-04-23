@@ -19,6 +19,15 @@ rsync -av --delete \
   --exclude='packages/web/' \
   --exclude='.github/' \
   --exclude='packages/cli/src/templates/' \
+  --exclude='.agents/' \
+  --exclude='skills-lock.json' \
+  --exclude='SKILL.md' \
+  --exclude='.claude/skills/' \
+  --exclude='posthog-setup-report.md' \
+  --exclude='*.d.ts' \
+  --exclude='*.d.ts.map' \
+  --exclude='*.js.map' \
+  --exclude='packages/*/src/**/*.js' \
   --exclude='node_modules/' \
   --exclude='dist/' \
   --exclude='.env' \

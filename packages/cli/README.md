@@ -10,12 +10,45 @@ Lock captures product decisions ("let's use notional value instead of margin her
 npm install -g @uselock/cli
 ```
 
-## Setup
+## Get started
+
+### 1. Sign up or log in
 
 ```bash
-lock login --url https://your-lock-server.com --key lk_...
-lock init --product trading --feature margin-engine
+# Create an account (opens browser)
+lock signup
+
+# Or log in with an existing API key
+lock login
 ```
+
+`lock login` is interactive — it will prompt you for your API URL and key. You can also pass them directly:
+
+```bash
+lock login --url https://api.uselock.ai --key lk_...
+```
+
+### 2. Initialize your project
+
+```bash
+lock init
+```
+
+This walks you through login (if needed), sets up the `.lock/` project directory, and offers to install the Lock skill for Claude Code / Cursor.
+
+Non-interactive mode:
+
+```bash
+lock init -y
+```
+
+### 3. Start locking decisions
+
+```bash
+lock "Use notional value instead of margin for position sizing"
+```
+
+That's it. Your decision is recorded with your name, timestamp, and project scope.
 
 ## Usage
 
@@ -32,12 +65,28 @@ lock check "add retry logic to order submission"
 # View recent decisions
 lock log --product trading
 
+# Show a specific decision
+lock show l-a7f3e2
+
 # Search decisions
 lock search "authentication flow"
 
+# Revert a decision
+lock revert l-a7f3e2 "Client wants margin view back"
+
+# Link a ticket or PR
+lock link l-a7f3e2 TRADE-442
+
 # Export decisions to markdown
 lock export --product trading --output LOCK.md
+
+# Check auth status
+lock whoami
 ```
+
+## Claude Code / Cursor integration
+
+`lock init` installs a Lock skill to `.claude/skills/lock/` that teaches AI agents how to use the Lock CLI — checking for existing decisions before coding and recording new ones as they work.
 
 ## Documentation
 

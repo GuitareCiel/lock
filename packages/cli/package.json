@@ -1,7 +1,7 @@
 {
   "name": "@uselock/cli",
-  "version": "0.2.0",
-  "description": "CLI for Lock — track product decisions where they happen",
+  "version": "0.2.4",
+  "description": "Lock — the decision protocol for agents",
   "license": "MIT",
   "type": "module",
   "bin": {

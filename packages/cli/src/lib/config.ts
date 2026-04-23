@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { ProjectConfig } from '../types.js';
 
+export const API_URL = 'https://api.uselock.ai';
+
 const CONFIG_DIR = path.join(process.cwd(), '.lock');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 

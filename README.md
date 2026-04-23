@@ -1,9 +1,6 @@
 # Lock
 
-<img width="1920" height="1080" alt="download" src="https://github.com/user-attachments/assets/d80f4d3f-9d7e-461a-b73d-5e1150353783" />
-
-
-Decision protocol layer for Agents. Records product decisions where they happen — Slack, terminal, or AI agent sessions — so you always know why something was built a certain way.
+The decision protocol for agents. Records product decisions where they happen — Slack, terminal, or AI agent sessions — so you always know why something was built a certain way.
 
 ```
 @lock Use notional value instead of margin for position display
@@ -21,7 +18,7 @@ Lock has one core API and multiple input surfaces:
 
 - **Slack bot** — `@lock <decision>` in any channel. Supports 3 modes: explicit, extract from thread, and polish.
 - **CLI** — `lock "<decision>"` from the terminal
-- **MCP server** — AI agents (Claude Code, Cursor) read and write decisions via tools
+- **AI agents** — Claude Code, Cursor, and other agents use Lock via an installed skill that teaches them to check decisions before coding and propose locking new ones
 - **REST API** — direct HTTP calls
 - **GitHub Action** — comments on PRs with relevant locked decisions
 
@@ -171,7 +168,6 @@ pnpm dev
 pnpm dev:core    # Core API on :3000
 pnpm dev:slack   # Slack bot on :3001
 pnpm dev:cli     # CLI in dev mode
-pnpm dev:mcp     # MCP server in dev mode
 ```
 
 ### 7. Run tests
@@ -226,28 +222,13 @@ pnpm --filter @uselock/cli build
 cd packages/cli && pnpm link --global
 ```
 
-### Authenticate
+### Get started
 
 ```bash
-lock login
+lock init
 ```
 
-This prompts for your Lock API URL and API key, validates them against the server, and saves credentials to `~/.lock/credentials`.
-
-For non-interactive use (CI/scripts):
-
-```bash
-lock login --url http://localhost:3000 --key lk_your_api_key
-```
-
-### Initialize a project directory
-
-```bash
-cd ~/your-project
-lock init --product trading --feature margin-rework
-```
-
-This creates `.lock/config.json` in the current directory. If Claude Code or Cursor is detected, it also offers to configure the MCP server and install a decision protocol skill. Use `--skip-ide` to bypass IDE setup.
+This walks you through login (via browser), project setup, and optionally installs a Lock skill for AI agents (Claude Code, Cursor) that teaches them to check for existing decisions before coding and propose locking new ones.
 
 Now you can commit decisions:
 
@@ -273,59 +254,23 @@ lock export             # generates LOCK.md with all active decisions
 | `lock link <id> <ref>` | Add an external link |
 | `lock export` | Export active decisions to `LOCK.md` |
 | `lock products` | List products |
-| `lock features` | List features |
-| `lock init` | Initialize project directory |
+| `lock products create "Name"` | Create a product |
+| `lock features [--product slug]` | List features |
+| `lock features create <product> "Name"` | Create a feature |
+| `lock init` | Set up Lock in a project |
 | `lock login` | Authenticate with a Lock server |
 | `lock logout` | Remove stored credentials |
 | `lock whoami` | Show current credentials and connection status |
 
-## MCP server setup (for AI agents)
+## AI agent integration
 
-The MCP server lets AI coding tools read and write decisions.
+`lock init` installs a Lock skill to `.claude/skills/lock/` that teaches AI agents to:
 
-### Recommended: via `lock init`
+1. **Check before building** — run `lock check` at the start of any task to find existing decisions
+2. **Recognize decisions** — when the agent makes or recommends a choice (library, approach, tradeoff), it proposes locking it
+3. **Ask the user** — the agent drafts the exact `lock` command and asks for approval before committing
 
-```bash
-lock login          # authenticate (once per machine)
-cd ~/your-project
-lock init           # detects Claude Code/Cursor, configures automatically
-```
-
-`lock init` writes `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor) with no secrets — credentials are read from `~/.lock/credentials`.
-
-### Manual
-
-Add to `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor):
-
-```json
-{
-  "mcpServers": {
-    "lock": {
-      "command": "npx",
-      "args": ["@uselock/mcp"],
-      "env": {
-        "LOCK_API_URL": "http://localhost:3000",
-        "LOCK_API_KEY": "lk_your_api_key"
-      }
-    }
-  }
-}
-```
-
-### MCP tools
-
-| Tool | Description |
-|------|-------------|
-| `lock_context` | All active decisions as formatted markdown. Separates architectural constraints from other decisions. |
-| `lock_check` | Pre-build constraint check. Splits results into blocking (architectural/major) and informational (minor). |
-| `lock_commit` | Record a new decision (auto-classified with decision type). |
-| `lock_recap` | Summary of recent decisions with scope/type breakdown and top contributors. |
-| `lock_query` | Query decisions with filters (product, feature, scope, status, type, tags). |
-| `lock_get` | Get a single decision by ID. |
-| `lock_get_lineage` | Get the supersession/revert chain for a decision. |
-| `lock_search_semantic` | Semantic search across decisions. |
-| `lock_list_products` | List all products. |
-| `lock_list_features` | List features, optionally filtered by product. |
+This means agents proactively participate in decision tracking without the user having to remember to lock things.
 
 ## GitHub Action
 
@@ -405,7 +350,7 @@ When committing a decision, Lock checks for existing decisions that may conflict
 
 1. **Pre-check** (Slack) — Before committing, Lock searches for similar active decisions in the same product. If conflicts are found, the user sees a warning with the conflicting decisions and an LLM-generated explanation. They can choose to **Commit anyway** or **Cancel**.
 
-2. **Post-commit** (CLI, MCP, API) — After committing, conflicts and supersessions are detected and returned in the response.
+2. **Post-commit** (CLI, API) — After committing, conflicts and supersessions are detected and returned in the response.
 
 Detection uses **vector similarity** (pgvector + OpenAI embeddings) when available, or **text similarity** (word-based Jaccard) as a fallback. Both paths use the LLM to classify the relationship and explain the conflict.
 
@@ -416,8 +361,7 @@ lock/
 ├── packages/
 │   ├── core/                # Fastify API — all business logic
 │   ├── slack/               # Slack bot (@slack/bolt, socket mode)
-│   ├── cli/                 # Terminal client (commander.js)
-│   └── mcp/                 # MCP server for AI agents
+│   └── cli/                 # Terminal client (commander.js)
 ├── actions/
 │   └── check-decisions/     # GitHub Action (standalone, built with ncc)
 ├── scripts/

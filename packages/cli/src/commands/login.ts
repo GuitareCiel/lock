@@ -1,9 +1,8 @@
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { Command } from 'commander';
+import { API_URL } from '../lib/config.js';
 import { credentialsExist, getCredentials } from '../lib/credentials.js';
-
-const API_URL = 'https://api.uselock.ai';
 
 async function loadDeviceFlow(): Promise<(apiUrl: string) => Promise<void>> {
   try {

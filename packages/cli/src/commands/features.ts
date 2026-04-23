@@ -18,7 +18,7 @@ export const featuresCommand = new Command('features')
       const features = result.features ?? result ?? [];
 
       if (!Array.isArray(features) || features.length === 0) {
-        console.log(chalk.dim('No features found. Create one with: lock features create "My Feature" --product <slug>'));
+        console.log(chalk.dim('No features found. Create one with: lock features create <product-slug> "My Feature"'));
         return;
       }
 
@@ -40,19 +40,18 @@ export const featuresCommand = new Command('features')
   });
 
 featuresCommand
-  .command('create <name>')
-  .description('Create a new feature')
-  .requiredOption('--product <slug>', 'Product slug')
+  .command('create <product> <name>')
+  .description('Create a new feature (usage: lock features create <product-slug> "Feature Name")')
   .option('--description <desc>', 'Feature description')
   .option('--slug <slug>', 'Custom slug (auto-generated from name if omitted)')
-  .action(async (name: string, opts: { product: string; description?: string; slug?: string }) => {
+  .action(async (product: string, name: string, opts: { description?: string; slug?: string }) => {
     try {
       const slug = opts.slug || slugify(name);
-      const body: Record<string, string> = { slug, name, product: opts.product };
+      const body: Record<string, string> = { slug, name, product };
       if (opts.description) body.description = opts.description;
 
       const result = await apiPost<any>('/api/v1/features', body);
-      console.log(chalk.green(`Feature created: ${result.name} (${result.slug}) in product ${opts.product}`));
+      console.log(chalk.green(`Feature created: ${result.name} (${result.slug}) in product ${product}`));
     } catch (err: any) {
       console.error(chalk.red(`Error: ${err.message}`));
       process.exit(1);

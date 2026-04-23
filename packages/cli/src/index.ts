@@ -20,7 +20,7 @@ import { whoamiCommand } from './commands/whoami.js';
 
 const program = new Command();
 
-program.name('lock').description('Lock — The decision protocol for product teams').version('0.2.0');
+program.name('lock').description('Lock — the decision protocol for agents').version('0.2.4');
 
 // Register subcommands
 program.addCommand(loginCommand);
